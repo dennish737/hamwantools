@@ -1,0 +1,6 @@
+﻿name,site_a,site_b,type_id
+path1,SPODEM,Krell,BPTP
+path2,SPODEM,Fancher,BPTP
+path3,Krell,Tekeo,BPTP
+path4,Fancher,Antonie,BPTP
+path5,Krell,Fancher,BPTP
