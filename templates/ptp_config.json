@@ -11,53 +11,81 @@
 	"config": {
 		"PTP": {
 			"interfaces": {
+				"bridge": {
+					"activities": {
+						"create": {
+							"command": "/interface bridge",
+							"actions": [{
+								"action": "add",
+								"params": {
+									"name": "localloopback0",
+									"disable": "no",
+									"protocol-mode": "rstp"
+								}
+							}]
+						},
+						"port_ether1": {
+							"command": "/interface bridge port",
+							"actions": [{
+								"action": "add",
+								"params": {
+									"interface": "ether1",
+									"bridge": "localloopback0"
+								}
+							}]
+						},
+						"ip_address": {
+							"command": "/ip address",
+							"actions": [{
+								"action": "add",
+								"params": {
+									"address": "ether1_ip",
+									"interface": "ether1"
+								}
+							}]
+						}
+					}
+				},
 				"wlan1": {
 					"activities": {
 						"create": {
 							"command": "/interface wireless",
-							"actions": [
-								{
-									"action": "set [ find defaultname=wlan1 ]",
-									"params": {
-										"band": "5ghz-onlyac",
-										"disabled": "no",
-										"country": "no_country_set",
-										"frequency-mode": "superchannel",
-										"frequency": "5700 ",
-										"nv2-cell-radius": "100 ",
-										"nv2-preshared-key": "backbonekey",
-										"radio-name": "routername",
-										"scan-list": "5700",
-										"ssid": "backbonename",
-										"tdma-period-size": "4",
-										"wireless-protocol": "nv2"
-									}
+							"actions": [{
+								"action": "set [ find defaultname=wlan1 ]",
+								"params": {
+									"band": "5ghz-onlyac",
+									"disabled": "no",
+									"country": "no_country_set",
+									"frequency-mode": "superchannel",
+									"frequency": "5700 ",
+									"nv2-cell-radius": "100 ",
+									"nv2-preshared-key": "backbonekey",
+									"radio-name": "routername",
+									"scan-list": "5700",
+									"ssid": "backbonename",
+									"tdma-period-size": "4",
+									"wireless-protocol": "nv2"
 								}
-							]
+							}]
 						},
 						"ip_address": {
 							"command": "/ip address",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"address": "wlan1_ip",
-										"interface": "wlan1",
-										"network": "remoteip"
-									}
+							"actions": [{
+								"action": "add",
+								"params": {
+									"address": "wlan1_ip",
+									"interface": "wlan1"
 								}
-							]
+							}]
 						},
 						"security_profile": {
 							"command": "/interface wireless security-profile",
-							"actions": [
-								{
-									"action": "set [ find default=yes ]",
-									"params": {
-										"supplicant-identity": "Mikrotik"
-									}
+							"actions": [{
+								"action": "set [ find default=yes ]",
+								"params": {
+									"supplicant-identity": "Mikrotik"
 								}
-							]
+							}]
 						}
 					}
 				},
@@ -65,170 +93,54 @@
 					"activities": {
 						"create": {
 							"command": "/interface vrrp",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"authentication": "ah",
-										"interface": "ether1",
-										"name": "vrrp1",
-										"password": "vrrpkey",
-										"version": "2"
-									}
+							"actions": [{
+								"action": "add",
+								"params": {
+									"authentication": "ah",
+									"interface": "ether1",
+									"name": "vrrp1",
+									"password": "vrrpkey",
+									"version": "2"
 								}
-							]
+							}]
 						},
 						"ip_address": {
 							"command": "/ip address",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"address": "defaultgateway",
-										"interface": "vrrp1",
-										"network": "defaultgateway"
-									}
+							"actions": [{
+								"action": "add",
+								"params": {
+									"address": "defaultgateway",
+									"interface": "vrrp1"
 								}
-							]
-						}
-					}
-				}
-			},
-			"routing": {
-				"ospf": {
-					"activities": {
-						"instance": {
-							"command": "/routing ospf instance",
-							"actions": [
-								{
-									"action": "set [ find default=yes ]",
-									"params": {
-										"distribute-default": "if-installed-as-type-1",
-										"in-filter": "AMPD-default",
-										"out-filter": "AMPR-default",
-										"redistribute-bgp": "as-type-1",
-										"redistribute-connected": "as-type-1",
-										"redistributre-other-ospf": "as-type-1",
-										"router-id": "eth1ip"
-									}
-								}
-							]
-						},
-						"filters": {
-							"command": "/routing filter",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"action": "accept",
-										"chain": "AMPR-default",
-										"prefix": "44.0.0.0/8",
-										"prefix-length": "8-32"
-									}
-								},
-								{
-									"action": "add",
-									"params": {
-										"action": "accept",
-										"chain": "AMPR-default",
-										"prefix": "0.0.0.0/0"
-									}
-								},
-								{
-									"action": "add",
-									"params": {
-										"action": "reject",
-										"chain": "AMPR-default"
-									}
-								}
-							]
-						},
-						"ospf_interfaces": {
-							"command": "/routing ospf interface",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"authentication": "md5",
-										"authentication-key": "ospfkey",
-										"interface": "wlan1",
-										"network-type": "point-to-point"
-									}
-								},
-								{
-									"action": "add",
-									"params": {
-										"authentication": "md5",
-										"authentication-key": "ospfkey",
-										"interface": "ether1",
-										"network-type": "broadcast"
-									}
-								}
-							]
-						},
-						"ospf_networks": {
-							"command": "/routing ospf network",
-							"actions": [
-								{
-									"action": "add",
-									"params": {
-										"area": "backbone",
-										"network": "network_allocation"
-									}
-								},
-								{
-									"action": "add",
-									"params": {
-										"area": "backbone",
-										"network": "wlan1_ip"
-									}
-								}
-							]
+							}]
 						}
 					}
 				}
 			},
 			"global_ip": {
 				"activities": {
-					"dns": {
-						"command": "/ip dns",
-						"actions": [
-							{
-								"action": "set",
-								"params": {
-									"servers": [
-										"dns_server1", "dns_server2"
-									]
-								}
-							}
-						]
-					},
 					"firewall": {
 						"command": "/ip firewall mangle",
-						"actions": [
-							{
-								"action": "add",
-								"params": {
-									"action": "change-mss",
-									"chain": "output",
-									"new-mss": "1378",
-									"protocol": "tcp",
-									"tcp-flags": "syn",
-									"tcp-mss": "!0-1378"
-								}
+						"actions": [{
+							"action": "add",
+							"params": {
+								"action": "change-mss",
+								"chain": "output",
+								"new-mss": "1378",
+								"protocol": "tcp",
+								"tcp-flags": "syn",
+								"tcp-mss": "!0-1378"
 							}
-						]
+						}]
 					},
 					"services": {
 						"command": "/ip service",
-						"actions": [
-							{
-								"action": "set ssh",
-								"params": {
-									"port": "222"
-								}
+						"actions": [{
+							"action": "set ssh",
+							"params": {
+								"port": "222"
 							}
-						]
+						}]
 					}
 				}
 			},
@@ -236,125 +148,69 @@
 				"activities": {
 					"community": {
 						"command": "/snmp community",
-						"actions": [
-							{
-								"action": "set [ find default=yes ]",
-								"params": {
-									"address": "network_allocation",
-									"name": "hamwan"
-								}
+						"actions": [{
+							"action": "set [ find default=yes ]",
+							"params": {
+								"address": "network_allocation",
+								"name": "hamwan"
 							}
-						]
+						}]
 					},
 					"contact": {
 						"command": "/snmp",
-						"actions": [
-							{
-								"action": "set contact",
-								"params": {
-									"contact": "#HamWAN-Support on irc.freenode.org",
-									"enable": "yes"
-								}
+						"actions": [{
+							"action": "set ",
+							"params": {
+								"contact": "\"#HamWAN-Support on irc.freenode.org\"",
+								"enable": "yes"
 							}
-						]
+						}]
 					}
 				}
 			},
 			"system": {
 				"activities": {
-					"clock": {
-						"command": "/system clock",
+					"identity": {
+						"command": "/system identity",
 						"actions": [
 							{
 								"action": "set",
 								"params": {
-									"time-zone-autodetect": "no",
-									"time-zone-name": "timezone"
+									"name": "sys_name"
 								}
 							}
 						]
+					},
+					"clock": {
+						"command": "/system clock",
+						"actions": [{
+							"action": "set",
+							"params": {
+								"time-zone-autodetect": "no",
+								"time-zone-name": "timezone"
+							}
+						}]
 					},
 					"led1": {
 						"command": "/system leds",
-						"actions": [
-							{
-								"action": "set 1",
-								"params": {
-									"interface": "wlan1"
-								}
+						"actions": [{
+							"action": "set 1",
+							"params": {
+								"interface": "wlan1"
 							}
-						]
-					},
-					"ntp": {
-						"command": "/system ntp client",
-						"actions": [
-							{
-								"action": "set",
-								"params": {
-									"enabled": "yes",
-									"primary-ntp": "ntp_server1",
-									"secondary-ntp": "ntp_server2"
-								}
-							}
-						]
-					},
-					"routerboard": {
-						"command": "/system routerboard settings",
-						"actions": [
-							{
-								"action": "set",
-								"params": {
-									"cpu-frequency": "720MHz"
-								}
-							}
-						]
+						}]
 					},
 					"tools": {
 						"command": "/tool bandwidth-server",
-						"actions": [
-							{
-								"action": "set",
-								"params": {
-									"authenticate": "no"
-								}
+						"actions": [{
+							"action": "set",
+							"params": {
+								"authenticate": "no"
 							}
-						]
-					},
-					"logging_create": {
-						"command": "/system logging action",
-						"actions": [
-							{
-								"action": "set 3",
-								"params": {
-									"remote": "log_server"
-								}
-							},
-							{
-								"action": "add",
-								"params": {
-									"name": "ZlogServer",
-									"remote": "log_server",
-									"target": "remote"
-								}
-							}
-						]
-					},
-					"logging": {
-						"command": "/system logging",
-						"actions": [
-							{
-								"action": "add",
-								"params": {
-									"action": "remote",
-									"topics": "!debug,!snmp"
-								}
-							}
-						]
+						}]
 					}
 				}
 			}
 		}
 	}
 }
-
-
