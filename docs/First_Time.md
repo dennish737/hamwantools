@@ -49,25 +49,9 @@ and do System->Reset Configuration, check the boxes "No Default Configuration" a
 
 The reset will cause the system to reboot. Wait for abut 15 second, the reconnect to the device.
 
+You can also reset the router from the command line. Open a terminal and enter the following
+    '/system reset-configuration no-defaults=yes skip-backup=yes'
 
-## Add System Name,  Bridge and IP address
-We want to give the system a name, change the default password.
-We also need to create a 'local' bridge, assign an IP address. To do this we will:
- 1. Connect to the device using winbox
- 2. Set the System Identity
- 3. Set the password
- 4. Add a Bridge
- 5. Add an IP address
-
-### Connect to device
-Using winbox, connect to the router, using the MAC address.
-
-### Set system Name
- 1. Select System->Identity
- 2. Enter the System Name
- 3. Click OK
-
-![system name](./images/System_identity.PNG "winbox set system identity")
 
 ### Set Admin Password
  1. Select System->Password
@@ -77,31 +61,18 @@ Using winbox, connect to the router, using the MAC address.
 ![system password](./images/System_password.PNG "winbox set system password")
 
 Note: once the password is set, you will need to use it access the device
-### Add a Bridge 
-To add a bridge to the device,
- 1. Select Bridge to open the Bridge configuration page
- 2. Select + to add a bridge
- 3. Give the Bridge a name of 'local'
- 4. Click OK
- 5. Now select Ports from the Bridge configuration page
- 6. Select + from the Ports Tab
- 7. Select the ethernet interface and bridge 'local'
- 8. Click OK
 
-![Bridge](./images/SetBridge.PNG "winbox add bridge and add ports")
+4. reboot device.
 
-For more information on Bridging watch this [video](https://www.youtube.com/watch?v=m-UCbCZg5H8)
+At this point you can now use the config tool to complete the device setup.
 
-### Add IP Address
-To add the IP Address to the bridge,
- 1. Winbox tool and connecting the device
- 2. Select IP->Address
- 3. Enter the IP Address for your device and the network mask (e.g./24)
- 4. select 'local' as the interface
- 5. Click OK
+After the reboot reconnect to the device
 
-![ip-address](./images/ip_address.png "winbox add ip address")
-
- 6. reboot device.
-
-At this point you can now use the config tool to complete the device setup
+### Download config file
+    1. Reconnect to the device using winbox.exe
+    2. Select the 'File Button'
+    3. On the local machine go to the project output files
+    4. Right click on the file for your device and drig it into the files box on winbox.exe. This uploads the file
+    5. Open a terminal
+        a. Enter the command /import <device file> Enter
+    

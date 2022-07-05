@@ -68,7 +68,7 @@ def main(args):
     ip, device_type = db.getDeviceIP(args.sys_name)
     print(device_name, ip, device_type)
 
-    out_file = './outputs/' + args.sys_name + '.config'
+    out_file = './outputs/' + args.sys_name + '.rsc'
 
     logging.info(f"mode={mode}")
     logging.info("device type ={}".format(device_type))
@@ -122,25 +122,31 @@ def main(args):
         for section, value in sections.items():
             logging.debug('Processing {}'.format(section))
             p = value(mode,device_type, template_file)
-            p.addParameters(region_params, router_params)
+            if p.data is not None:
+                p.addParameters(region_params, router_params)
 
-            interfaces = p.getTypeList()
+                interfaces = p.getTypeList()
 
-            commands = []
+                commands = []
 
-            if section in ['interfaces', 'routing']:
-                for interface in interfaces:
-                    logging.debug("processing interface = {}".format(interface))
-                    activities = p.getActivities(interface)
+                if section in ['interfaces', 'routing']:
+                    for interface in interfaces:
+                        logging.debug("processing interface = {}".format(interface))
+                        activities = p.getActivities(interface)
+                        for activity in activities:
+                            command = p.parseSettings(interface, activity, region_params, router_params)
+                            print(command)
+                            commands.extend(command)
+                else:
+                    activities = p.getActivities()
                     for activity in activities:
-                        commands.extend(p.parseSettings(interface, activity, region_params, router_params ))
-            else:
-                activities = p.getActivities()
-                for activity in activities:
-                    commands.extend(p.parseSettings(activity, region_params, router_params))
+                        command = p.parseSettings(activity, region_params, router_params)
+                        print(command)
+                        commands.extend(command)
 
-            for command in commands:
-                print(command, file=output)
+                for command in commands:
+                    print(command, file=output)
+
 
     logging.info("Config file {} created".format(out_file))
     print("Config file {} created".format(out_file))
@@ -207,8 +213,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ip', help='The tested Mikrotik IP address')
     parser.add_argument('-l', '--log', default = None, help='logging file, default will be system name')
     parser.add_argument('-p', '--port', help='The tested Mikrotik SSH port', default='22')
-    parser.add_argument('-u', '--userName', help='User name with admin Permissions', required=True)
-    parser.add_argument('-ps', '--password', help='The password of the given user name', default='')
+    parser.add_argument('-u', '--userName', help='User name with admin Permissions')
+    parser.add_argument('--password', help='The password of the given user name', default='')
     parser.add_argument('-r','--region', help='region id', default='9')
     parser.add_argument('--mode', default='config', const='config',
                         nargs='?',
@@ -226,10 +232,16 @@ if __name__ == '__main__':
     parser.add_argument('-update', help='Update the CVE Json file', action='store_true')
 
     if TEST == True:
-        args= parser.parse_args(['-s','SPODEM.PTP1','--port','22','-u','admin','-ps','SnoDEM720'])
+        #args = parser.parse_args(['-s', 'SPODEM.PTP1', '-i', '44.12.135.16', '--port', '22', '-u', 'admin', '--password', 'SnoDEM720'])
+        args = parser.parse_args(  ['-s', 'SPODEM.PTP1'])
     else:
         args = parser.parse_args()
 
+    if args.ip is not None:
+        # check to make sure we have user and password
+        if args.userName is None or args.password is None:
+            print("If ip address is supplied, you must also supply user name and password")
+            exit(1)
     #print(args)
 
     main(args)

@@ -17,7 +17,11 @@ class ParseSNMP(BaseParser):
         self.region_keys = []
         self.router_keys = []
         with open(template_file) as json_file:
-            self.data = json.load(json_file)[mode][device_type][self.section]
+            raw_data = json.load(json_file)[mode][device_type]
+            if self.section in raw_data.keys():
+                self.data = raw_data[self.section]
+            else:
+                self.data = None
         logging.debug("starting {}".format(self.__name__))
 
     def getTypeList(self):
