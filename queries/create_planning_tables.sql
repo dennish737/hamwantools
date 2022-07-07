@@ -24,6 +24,17 @@ CREATE TABLE "path_types" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
+-- service passwords.
+-- Services are items like wireless network, vrrp, etc that
+-- require individual routers to join the group
+-- this table provide the a service of service passwords
+CREATE TABLE "services_pwd" (
+	"id"	INTEGER NOT NULL,
+	"service"	TEXT NOT NULL,
+	"name"	TEXT NOT NULL,
+	"passwd"	TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
 
 CREATE TABLE "organizations" (
 	"org_id"	INTEGER NOT NULL,
@@ -55,15 +66,37 @@ CREATE TABLE "network_allocations" (
 CREATE TABLE "address_blocks" (
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
-	"start_address"	TEXT NOT NULL UNIQUE,
-	"end_address"	TEXT NOT NULL UNIQUE,
-	"num_addresses" INTEGER NOT NULL,
-	"start_ip_num" INTEGER NOT NULL,
-	"end_ip_num" INTEGER NOT NULL,
-	"reserved"	TEXT,
+	"network"	INTEGER NOT NULL,
+	"start_ip"	INTEGER NOT NULL,
+	"end_ip" INTEGER NOT NULL,
+	"broadcast" INTEGER NOT NULL,
+	"num_ip" INTEGER NOT NULL,
+	"assigned"	TEXT DEFAULT NULL,
+	"linked" INTEGER DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+	FOREIGN KEY ("org_id") REFERENCES organizations (org_id)
+	FOREIGN KEY ("network") REFERENCES ip_addresses (id)
+	FOREIGN KEY ("start_ip") REFERENCES ip_addresses (id)
+	FOREIGN KEY ("end_ip") REFERENCES ip_addresses (id)
+	FOREIGN KEY ("broadcast") REFERENCES ip_addresses (id)
+);
+
+CREATE _TABLE ip_types (
+    "id"	INTEGER NOT NULL,
+    type_name TEXT NOT NULL UNIQUE
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE ip_addresses (
+	"id"	INTEGER NOT NULL,
+	"org_id"	INTEGER NOT NULL,
+	"ip_address"	TEXT NOT NULL UNIQUE,
+	"ip_type"	INTEGER NOT NULL,
+	"reserved"	INTEGER DEFAULT 0 NOT NULL,
 	"assigned" INTEGER DEFAULT 0 NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 	FOREIGN KEY ("org_id") REFERENCES organizations (org_id)
+	FOREIGN KEY ("ip_type") REFERENCES ip_types (id)
 );
 
 CREATE TABLE "sites" (
@@ -120,3 +153,6 @@ INSERT INTO path_types (description, identifier)
 	VALUES('backbone', 'BPTP'),
 		  ('client ptmp', 'CPTMP'),
 		  ('client ptp', 'CPTP');
+
+INSERT INTO ip_types (type_name)
+VALUES ("general"), ("ptp"), ("device");

@@ -138,7 +138,7 @@
 						"actions": [{
 							"action": "set ssh",
 							"params": {
-								"port": "222"
+								"port": "22"
 							}
 						}]
 					}
