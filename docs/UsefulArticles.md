@@ -37,7 +37,10 @@
 
 [OSPF Neighborship](https://www.youtube.com/watch?v=ynmsapjWGxY)
 
+[OPSF Setup Microtik](https://www.youtube.com/watch?v=NuJio20QZ9Y)
 
 [Wireless Backhaul](https://www.youtube.com/watch?v=rnUQWnpJ4MQ)
 
 [Network Automation using Pyton(Paramiko) on Mikro Tik](https://www.youtube.com/watch?v=iKmny3v1tb8)
+
+[Simple PTP Setup](https://www.youtube.com/watch?v=NuJio20QZ9Y)

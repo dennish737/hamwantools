@@ -206,7 +206,7 @@ def print_txt_results(res, concise):
 
 if __name__ == '__main__':
 
-    TEST=True
+    TEST=False
     args = None
     parser: ArgumentParser = argparse.ArgumentParser()
     parser.add_argument('-s', '--sys_name', help='system name', required=True)
