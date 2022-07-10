@@ -1,6 +1,10 @@
 ﻿name,site_a,site_b,type_id
-path1,SPODEM,Krell,BPTP
-path2,SPODEM,Fancher,BPTP
-path3,Krell,Tekeo,BPTP
-path4,Fancher,Antonie,BPTP
-path5,Krell,Fancher,BPTP
+path1,GW,SITE1,BPTP
+path2,GW,SITE2,BPTP
+path3,GW,SITE3,BPTP
+path4,GW,SITE4,BPTP
+path5,SITE1,SITE5,BPTP
+path6,SITE2,SITE6,BPTP
+path7,SITE3,SITE7,BPTP
+path8,SITE4,SITE8,BPTP
+
