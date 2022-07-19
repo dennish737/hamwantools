@@ -2,22 +2,31 @@
 -- this file creates the tables for the planning data base
 -- once created the user can add information to the tables
 -- to construct their network
+--
+-- Version 1.0.0
 
-CREATE TABLE "equipment_types" (
+--PRAGMA foreign_keys = OFF;
+--DROP TABLE IF EXISTS "equipment_groups";
+CREATE TABLE IF NOT EXISTS "equipment_groups" (
 	"id"	INTEGER NOT NULL,
+	"group_name" TEXT NOT NULL,
 	"description"	TEXT NOT NULL,
-	"iddentifier"	TEXT NOT NULL,
+	"suffix"	TEXT NOT NULL,
+	"interfaces" json,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE "site_types" (
+
+--DROP TABLE IF EXISTS "site_types";
+CREATE TABLE IF NOT EXISTS "site_types" (
 	"id"	INTEGER NOT NULL,
 	"description"	TEXT NOT NULL,
 	"identifier"	TEXT NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE "path_types" (
+--DROP TABLE IF EXISTS "path_types";
+CREATE TABLE IF NOT EXISTS "path_types" (
     "id"	INTEGER NOT NULL,
     "description" TEXT NOT NULL,
     "identifier" INTEGER NOT NULL,
@@ -28,15 +37,18 @@ CREATE TABLE "path_types" (
 -- Services are items like wireless network, vrrp, etc that
 -- require individual routers to join the group
 -- this table provide the a service of service passwords
-CREATE TABLE "services_pwd" (
+--DROP TABLE IF EXISTS "services_pwd";
+CREATE TABLE IF NOT EXISTS "services_pwd" (
 	"id"	INTEGER NOT NULL,
-	"service"	TEXT NOT NULL,
-	"name"	TEXT NOT NULL,
+	"org_id" INTEGER NOT NULL,
+	"tag"	TEXT NOT NULL,
 	"passwd"	TEXT NOT NULL,
+	FOREIGN KEY(org_id) REFERENCES organizations("org_id"),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE "organizations" (
+--DROP TABLE IF EXISTS "organizations";
+CREATE TABLE IF NOT EXISTS "organizations" (
 	"org_id"	INTEGER NOT NULL,
 	"state"	TEXT,
 	"county"	TEXT,
@@ -51,7 +63,8 @@ CREATE TABLE "organizations" (
 	PRIMARY KEY("org_id" AUTOINCREMENT)
 );
 
-CREATE TABLE "network_allocations" (
+--DROP TABLE IF EXISTS "network_allocations";
+CREATE TABLE IF NOT EXISTS "network_allocations" (
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"network_allocation"	TEXT NOT NULL,
@@ -59,11 +72,33 @@ CREATE TABLE "network_allocations" (
 	"ending_address"	TEXT NOT NULL,
 	"subnet_mask"	INTEGER NOT NULL,
 	"blocks_created"	INTEGER NOT NULL DEFAULT 0,
-	FOREIGN KEY("org_id") REFERENCES "organizations"("org_id"),
+	FOREIGN KEY("org_id") REFERENCES organizations("org_id"),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
-CREATE TABLE "address_blocks" (
+--DROP TABLE IF EXISTS "ip_types";
+CREATE TABLE IF NOT EXISTS "ip_types" (
+    "id"	INTEGER NOT NULL,
+    type_name TEXT NOT NULL UNIQUE,
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+--DROP TABLE IF EXISTS "ip_addresses";
+CREATE TABLE IF NOT EXISTS "ip_addresses" (
+	"id"	INTEGER NOT NULL,
+	"org_id"	INTEGER NOT NULL,
+	"ip_address"	TEXT NOT NULL UNIQUE,
+	"ip_type"	INTEGER NOT NULL,
+	"reserved"	INTEGER DEFAULT 0 NOT NULL,
+	"assigned" INTEGER DEFAULT 0 NOT NULL,
+	"new" INTEGER DEFAULT 1 NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY ("org_id") REFERENCES organizations (org_id),
+	FOREIGN KEY ("ip_type") REFERENCES ip_types (id)
+);
+
+--DROP TABLE IF EXISTS "address_blocks";
+CREATE TABLE IF NOT EXISTS "address_blocks" (
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"network"	INTEGER NOT NULL,
@@ -71,35 +106,19 @@ CREATE TABLE "address_blocks" (
 	"end_ip" INTEGER NOT NULL,
 	"broadcast" INTEGER NOT NULL,
 	"num_ip" INTEGER NOT NULL,
+	"new"   INTEGER DEFAULT 1 NOT NULL,
 	"assigned"	TEXT DEFAULT NULL,
-	"linked" INTEGER DEFAULT 0,
-	PRIMARY KEY("id" AUTOINCREMENT)
-	FOREIGN KEY ("org_id") REFERENCES organizations (org_id)
-	FOREIGN KEY ("network") REFERENCES ip_addresses (id)
-	FOREIGN KEY ("start_ip") REFERENCES ip_addresses (id)
-	FOREIGN KEY ("end_ip") REFERENCES ip_addresses (id)
+	"linked" INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY ("org_id") REFERENCES organizations (org_id),
+	FOREIGN KEY ("network") REFERENCES ip_addresses (id),
+	FOREIGN KEY ("start_ip") REFERENCES ip_addresses (id),
+	FOREIGN KEY ("end_ip") REFERENCES ip_addresses (id),
 	FOREIGN KEY ("broadcast") REFERENCES ip_addresses (id)
 );
 
-CREATE _TABLE ip_types (
-    "id"	INTEGER NOT NULL,
-    type_name TEXT NOT NULL UNIQUE
-    PRIMARY KEY("id" AUTOINCREMENT)
-);
-
-CREATE TABLE ip_addresses (
-	"id"	INTEGER NOT NULL,
-	"org_id"	INTEGER NOT NULL,
-	"ip_address"	TEXT NOT NULL UNIQUE,
-	"ip_type"	INTEGER NOT NULL,
-	"reserved"	INTEGER DEFAULT 0 NOT NULL,
-	"assigned" INTEGER DEFAULT 0 NOT NULL,
-	PRIMARY KEY("id" AUTOINCREMENT)
-	FOREIGN KEY ("org_id") REFERENCES organizations (org_id)
-	FOREIGN KEY ("ip_type") REFERENCES ip_types (id)
-);
-
-CREATE TABLE "sites" (
+--DROP TABLE IF EXISTS "sites";
+CREATE TABLE IF NOT EXISTS "sites" (
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"site_type" INTEGER NOT NULL,
@@ -108,51 +127,77 @@ CREATE TABLE "sites" (
 	"contact"	TEXT,
 	"lat"	REAL,
 	"lon"	REAL,
-	PRIMARY KEY("id" AUTOINCREMENT)
-	FOREIGN KEY ("org_id") REFERENCES organizations (org_id)
+	"num_routers" INTEGER DEFAULT 0 NOT NULL,
+	"num_sectors" INTEGER DEFAULT 0 NOT NULL,
+	"num_ptp" INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY ("org_id") REFERENCES organizations (org_id),
 	FOREIGN KEY ("site_type") REFERENCES site_types(id)
 );
 
-CREATE TABLE "paths" (
+--DROP TABLE IF EXISTS "site_equipment";
+CREATE TABLE IF NOT EXISTS "site_equipment" (
+	"id"	INTEGER NOT NULL,
+	"site_id"	INTEGER NOT NULL,
+	"group_id"   INTEGER NOT NULL,
+	"name"	TEXT DEFAULT NULL,
+	"serial_num"	TEXT DEFAULT NULL,
+	"model"	TEXT DEFAULT NULL,
+	"active" INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY ("site_id") REFERENCES sites(id),
+	FOREIGN KEY ("group_id") REFERENCES equipment_groups(id)
+);
+
+--DROP TABLE IF EXISTS "paths";
+CREATE TABLE IF NOT EXISTS "paths" (
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"type_id"   INTEGER NOT NULL,
 	"site_a"	INTEGER NOT NULL,
 	"site_b"	INTEGER NOT NULL,
+	"ptp_block"  INTEGER,
+	"device_a"   INTEGER,
+	"device_b"   INTEGER,
 	"name"	    TEXT NOT NULL UNIQUE,
-	PRIMARY KEY("id" AUTOINCREMENT)
-	FOREIGN KEY ("org_id") REFERENCES organizations(id)
-	FOREIGN KEY ("type_id") REFERENCES path_types(id)
+	PRIMARY KEY("id" AUTOINCREMENT),
+	FOREIGN KEY ("org_id") REFERENCES organizations(id),
+	FOREIGN KEY ("type_id") REFERENCES path_types(id),
+	FOREIGN KEY ("site_a") REFERENCES sites(id),
+	FOREIGN KEY ("site_b") REFERENCES sites(id),
+	FOREIGN KEY ("ip_block") REFERENCES ptp_block(id),
+	FOREIGN KEY ("device_a") REFERENCES site_equipment(id),
+	FOREIGN KEY ("device_b") REFERENCES site_equipment(id),
+	UNIQUE(site_a, device_a),
+	UNIQUE(site_b,device_b)
 );
 
-CREATE TABLE "equipment" (
+--DROP TABLE IF EXISTS "ptp_blocks";
+CREATE TABLE IF NOT EXISTS "ptp_blocks" (
 	"id"	INTEGER NOT NULL,
-	"site_id"	INTEGER NOT NULL,
-	"type_id"   INTEGER NOT NULL,
-	"name"	TEXT,
-	"serial_num"	TEXT,
-	"model"	TEXT,
+	"org_id"	INTEGER NOT NULL,
+	"ip_a"	INTEGER NOT NULL,
+	"ip_b"	INTEGER NOT NULL,
+	"new"   INTEGER DEFAULT 1,
+	"assigned"	INTEGER DEFAULT NULL,
+	FOREIGN KEY("ip_a") REFERENCES "ip_addresses"("id"),
+	FOREIGN KEY("ip_b") REFERENCES "ip_addresses"("id"),
+	FOREIGN KEY("assigned") REFERENCEs "paths"("id"),
+	FOREIGN KEY("org_id") REFERENCES "organizations"("org_id"),
+	UNIQUE("ip_a"),
+	UNIQUE("ip_b")
 	PRIMARY KEY("id" AUTOINCREMENT)
-	FOREIGN KEY ("site_id") REFERENCES sites(id)
-	FOREIGN KEY ("type_id") REFERENCES equipment_types(id)
 );
 
-INSERT INTO equipment_types (description, identifier)
-	VALUES('cell router', 'R'),
-		  ('cell sector', 'S'),
-		  ('cell ptp', 'PTP'),
-		  ('client ptmp', 'CPTMP'),
-		  ('client ptp', 'CPTP');
-
-INSERT INTO site_types (description, identifier)
-	VALUES('cell', 'cell'),
-		  ('gateway', 'gw'),
-		  ('client', 'c');
-
-INSERT INTO path_types (description, identifier)
-	VALUES('backbone', 'BPTP'),
-		  ('client ptmp', 'CPTMP'),
-		  ('client ptp', 'CPTP');
-
-INSERT INTO ip_types (type_name)
-VALUES ("general"), ("ptp"), ("device");
+--DROP TABLE IF EXISTS "interfaces";
+CREATE TABLE IF NOT EXISTS "interfaces" (
+    "id" INTEGER NOT NULL,
+    "equip_id" INTEGER NOT NULL,
+    "if_type" TEXT  NOT NULL,
+    "if_name" TEXT NOT NULL,
+    "addr_id" INTEGER,
+    "new" INTEGER DEFAULT 1 NOT NULL,
+    FOREIGN KEY ("addr_id") REFERENCES ip_addresses("id"),
+    UNIQUE("equip_id", "if_name")
+    PRIMARY KEY("id" AUTOINCREMENT)
+    );

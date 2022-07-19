@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Sqlite" id="Project-245d" database="Sqlite" >
+	<schema name="Default" >
+		<table name="address_blocks" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="network" type="INTEGER" jt="4" mandatory="y" />
+			<column name="start_ip" type="INTEGER" jt="4" mandatory="y" />
+			<column name="end_ip" type="INTEGER" jt="4" mandatory="y" />
+			<column name="broadcast" type="INTEGER" jt="4" mandatory="y" />
+			<column name="num_ip" type="INTEGER" jt="4" mandatory="y" />
+			<column name="new" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[1]]></defo>
+			</column>
+			<column name="assigned" type="TEXT" jt="-1" />
+			<column name="linked" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="pk_address_blocks" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_address_blocks organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+			<fk name="FK_address_blocks ip_addresses" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="network" pk="id" />
+			</fk>
+			<fk name="FK_address_blocks ip_addresses_001" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="start_ip" pk="id" />
+			</fk>
+			<fk name="FK_address_blocks ip_addresses_002" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="end_ip" pk="id" />
+			</fk>
+			<fk name="FK_address_blocks ip_addresses_003" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="broadcast" pk="id" />
+			</fk>
+		</table>
+		<table name="equipment_groups" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="group_name" type="TEXT" jt="-1" mandatory="y" />
+			<column name="description" type="TEXT" jt="-1" mandatory="y" />
+			<column name="suffix" type="TEXT" jt="-1" mandatory="y" />
+			<column name="interfaces" type="VARCHAR" jt="12" />
+			<index name="pk_equipment_groups" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+		</table>
+		<table name="interfaces" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="equipt_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="if_type" type="TEXT" jt="-1" mandatory="y" />
+			<column name="if_name" type="TEXT" jt="-1" mandatory="y" />
+			<column name="addr_id" type="INTEGER" jt="4" />
+			<column name="new" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="pk_interfaces" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_interfaces ip_addresses" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="addr_id" pk="id" />
+			</fk>
+		</table>
+		<table name="ip_addresses" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="ip_address" type="TEXT" jt="-1" mandatory="y" />
+			<column name="ip_type" type="INTEGER" jt="4" mandatory="y" />
+			<column name="reserved" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<column name="assigned" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<column name="new" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[1]]></defo>
+			</column>
+			<index name="unq_ip_addresses_ip_address" unique="UNIQUE_KEY" >
+				<column name="ip_address" />
+			</index>
+			<index name="pk_ip_addresses" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_ip_addresses organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+			<fk name="FK_ip_addresses ip_types" to_schema="Default" to_table="ip_types" options="" >
+				<fk_column name="ip_type" pk="id" />
+			</fk>
+		</table>
+		<table name="ip_types" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="type_name" type="TEXT" jt="-1" mandatory="y" />
+			<index name="unq_ip_types_type_name" unique="UNIQUE_KEY" >
+				<column name="type_name" />
+			</index>
+			<index name="pk_ip_types" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+		</table>
+		<table name="network_allocations" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="network_allocation" type="TEXT" jt="-1" mandatory="y" />
+			<column name="starting_address" type="TEXT" jt="-1" mandatory="y" />
+			<column name="ending_address" type="TEXT" jt="-1" mandatory="y" />
+			<column name="subnet_mask" type="INTEGER" jt="4" mandatory="y" />
+			<column name="blocks_created" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="pk_network_allocations" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_network_allocations organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+		</table>
+		<table name="organizations" spec="" >
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="state" type="TEXT" jt="-1" />
+			<column name="county" type="TEXT" jt="-1" />
+			<column name="state_region_id" type="INTEGER" jt="4" />
+			<column name="friendly_name" type="TEXT" jt="-1" />
+			<column name="club_name" type="TEXT" jt="-1" mandatory="y" />
+			<column name="club_contact" type="TEXT" jt="-1" />
+			<column name="ptp_net_size" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[256]]></defo>
+			</column>
+			<column name="device_net_size" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[256]]></defo>
+			</column>
+			<column name="block_size" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[16]]></defo>
+			</column>
+			<column name="share_ptp_net" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="unq_organizations_club_name" unique="UNIQUE_KEY" >
+				<column name="club_name" />
+			</index>
+			<index name="pk_organizations" unique="PRIMARY_KEY" >
+				<column name="org_id" options=" AUTOINCREMENT" />
+			</index>
+		</table>
+		<table name="path_types" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="description" type="TEXT" jt="-1" mandatory="y" />
+			<column name="identifier" type="INTEGER" jt="4" mandatory="y" />
+			<index name="pk_path_types" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+		</table>
+		<table name="paths" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="type_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="site_a" type="INTEGER" jt="4" mandatory="y" />
+			<column name="site_b" type="INTEGER" jt="4" mandatory="y" />
+			<column name="ip_block" type="INTEGER" jt="4" />
+			<column name="device_a" type="INTEGER" jt="4" />
+			<column name="device_b" type="INTEGER" jt="4" />
+			<column name="name" type="TEXT" jt="-1" mandatory="y" />
+			<index name="unq_paths_name" unique="UNIQUE_KEY" >
+				<column name="name" />
+			</index>
+			<index name="pk_paths" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_paths organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" />
+			</fk>
+			<fk name="FK_paths path_types" to_schema="Default" to_table="path_types" options="" >
+				<fk_column name="type_id" pk="id" />
+			</fk>
+			<fk name="FK_paths sites" to_schema="Default" to_table="sites" options="" >
+				<fk_column name="site_a" pk="id" />
+			</fk>
+			<fk name="FK_paths sites_001" to_schema="Default" to_table="sites" options="FOREIGN KEY (&quot;ip_block&quot;) REFERENCES ptp_block(id) FOREIGN KEY (&quot;device_a&quot;) REFERENCES site_equipment(id) FOREIGN KEY (&quot;device_b&quot;) REFERENCES site_equipment(id)" >
+				<fk_column name="site_b" pk="id" />
+			</fk>
+		</table>
+		<table name="ptp_blocks" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="ip_a" type="INTEGER" jt="4" mandatory="y" />
+			<column name="ip_b" type="INTEGER" jt="4" mandatory="y" />
+			<column name="new" type="INTEGER" jt="4" >
+				<defo><![CDATA[1]]></defo>
+			</column>
+			<column name="assigned" type="INTEGER" jt="4" />
+			<index name="pk_ptp_blocks" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_ptp_blocks ip_addresses" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="ip_a" pk="id" />
+			</fk>
+			<fk name="FK_ptp_blocks ip_addresses_001" to_schema="Default" to_table="ip_addresses" options="" >
+				<fk_column name="ip_b" pk="id" />
+			</fk>
+			<fk name="FK_ptp_blocks paths" to_schema="Default" to_table="paths" options="" >
+				<fk_column name="assigned" pk="id" />
+			</fk>
+			<fk name="FK_ptp_blocks organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+		</table>
+		<table name="services_pwd" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="tag" type="TEXT" jt="-1" mandatory="y" />
+			<column name="passwd" type="TEXT" jt="-1" mandatory="y" />
+			<index name="pk_services_pwd" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_services_pwd organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+		</table>
+		<table name="site_equipment" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="site_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="group_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="name" type="TEXT" jt="-1" />
+			<column name="serial_num" type="TEXT" jt="-1" />
+			<column name="model" type="TEXT" jt="-1" />
+			<column name="active" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="pk_site_equipment" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_site_equipment sites" to_schema="Default" to_table="sites" options="" >
+				<fk_column name="site_id" pk="id" />
+			</fk>
+			<fk name="FK_site_equipment equipment_groups" to_schema="Default" to_table="equipment_groups" options="" >
+				<fk_column name="group_id" pk="id" />
+			</fk>
+		</table>
+		<table name="site_types" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="description" type="TEXT" jt="-1" mandatory="y" />
+			<column name="identifier" type="TEXT" jt="-1" mandatory="y" />
+			<index name="pk_site_types" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+		</table>
+		<table name="sites" spec="" >
+			<column name="id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="org_id" type="INTEGER" jt="4" mandatory="y" />
+			<column name="site_type" type="INTEGER" jt="4" mandatory="y" />
+			<column name="name" type="TEXT" jt="-1" mandatory="y" />
+			<column name="Owner" type="TEXT" jt="-1" />
+			<column name="contact" type="TEXT" jt="-1" />
+			<column name="lat" type="REAL" jt="8" />
+			<column name="lon" type="REAL" jt="8" />
+			<column name="num_routers" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<column name="num_sectors" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<column name="num_ptp" type="INTEGER" jt="4" mandatory="y" >
+				<defo><![CDATA[0]]></defo>
+			</column>
+			<index name="unq_sites_name" unique="UNIQUE_KEY" >
+				<column name="name" />
+			</index>
+			<index name="pk_sites" unique="PRIMARY_KEY" >
+				<column name="id" options=" AUTOINCREMENT" />
+			</index>
+			<fk name="FK_sites organizations" to_schema="Default" to_table="organizations" options="" >
+				<fk_column name="org_id" pk="org_id" />
+			</fk>
+			<fk name="FK_sites site_types" to_schema="Default" to_table="site_types" options="" >
+				<fk_column name="site_type" pk="id" />
+			</fk>
+		</table>
+	</schema>
+	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.36.0.3.jar" driver_desc="Standard" host="localhost" port="7210" instance="F:/repos/hamwantools/data/planning_example.sqlite3" />
+	<layout name="Main Layout" id="Layout-179b" show_relation="columns" >
+		<entity schema="Default" name="address_blocks" color="C7F4BE" x="1296" y="272" />
+		<entity schema="Default" name="equipment_groups" color="BED3F4" x="1248" y="896" />
+		<entity schema="Default" name="interfaces" color="C7F4BE" x="1072" y="560" />
+		<entity schema="Default" name="ip_addresses" color="C7F4BE" x="1072" y="272" />
+		<entity schema="Default" name="ip_types" color="C7F4BE" x="848" y="560" />
+		<entity schema="Default" name="network_allocations" color="F4DDBE" x="208" y="592" />
+		<entity schema="Default" name="organizations" color="F4DDBE" x="224" y="272" />
+		<entity schema="Default" name="path_types" color="F4DDBE" x="624" y="272" />
+		<entity schema="Default" name="paths" color="F4DDBE" x="448" y="272" />
+		<entity schema="Default" name="ptp_blocks" color="F4DDBE" x="448" y="592" />
+		<entity schema="Default" name="services_pwd" color="F4DDBE" x="48" y="384" />
+		<entity schema="Default" name="site_equipment" color="BED3F4" x="1056" y="896" />
+		<entity schema="Default" name="site_types" color="BED3F4" x="848" y="1216" />
+		<entity schema="Default" name="sites" color="BED3F4" x="848" y="896" />
+		<callout x="336" y="80" pointer="Round" >
+			<comment><![CDATA[This is a layout - a diagram with tools. 
+Add tables by drag and drop from the project structure tree. 
+For a better understanding of the schema, create multiple layouts with the same or different tables. 
+Double-click table headers, columns, or foreign keys to edit. 
+Drop this callout from its right-click popup menu.]]></comment>
+		</callout>
+		<group name="sites" color="ECF0F7" >
+			<entity schema="Default" name="sites" />
+			<entity schema="Default" name="site_equipment" />
+			<entity schema="Default" name="equipment_groups" />
+			<entity schema="Default" name="site_types" />
+		</group>
+		<group name="ip_addresses" color="EEF7EC" >
+			<entity schema="Default" name="ip_addresses" />
+			<entity schema="Default" name="address_blocks" />
+			<entity schema="Default" name="interfaces" />
+			<entity schema="Default" name="ip_types" />
+		</group>
+		<group name="organizations" color="F7F2EC" >
+			<entity schema="Default" name="organizations" />
+			<entity schema="Default" name="paths" />
+			<entity schema="Default" name="ptp_blocks" />
+			<entity schema="Default" name="network_allocations" />
+			<entity schema="Default" name="services_pwd" />
+			<entity schema="Default" name="path_types" />
+		</group>
+	</layout>
+	<layout name="~Layout with Sample Tools" id="Layout-13a9" show_column_type="y" show_relation="columns" >
+		<entity schema="Default" name="address_blocks" color="C7F4BE" x="1520" y="48" />
+		<entity schema="Default" name="equipment_groups" color="BED3F4" x="1488" y="672" />
+		<entity schema="Default" name="interfaces" color="C7F4BE" x="1248" y="336" />
+		<entity schema="Default" name="ip_addresses" color="C7F4BE" x="1264" y="48" />
+		<entity schema="Default" name="ip_types" color="C7F4BE" x="1008" y="128" />
+		<entity schema="Default" name="network_allocations" color="F4DDBE" x="272" y="368" />
+		<entity schema="Default" name="organizations" color="F4DDBE" x="272" y="48" />
+		<entity schema="Default" name="path_types" color="F4DDBE" x="752" y="48" />
+		<entity schema="Default" name="paths" color="F4DDBE" x="528" y="48" />
+		<entity schema="Default" name="ptp_blocks" color="F4DDBE" x="528" y="368" />
+		<entity schema="Default" name="services_pwd" color="F4DDBE" x="48" y="368" />
+		<entity schema="Default" name="site_equipment" color="BED3F4" x="1264" y="672" />
+		<entity schema="Default" name="site_types" color="BED3F4" x="1008" y="992" />
+		<entity schema="Default" name="sites" color="BED3F4" x="1008" y="672" />
+		<script name="SQL Editor" id="Editor-527" language="SQL" >
+			<string><![CDATA[SELECT id, org_id, ip_address, ip_type, reserved, assigned, new
+FROM
+	ip_addresses s;]]></string>
+		</script>
+		<browser id="Browse-b4" name="Relational Data Explorer" confirm_updates="y" >
+			<browse_table schema="Default" entity="ip_addresses" x="20" y="20" width="400" height="300" >
+				<browse_table schema="Default" entity="address_blocks" fk="FK_address_blocks ip_addresses" x="440" y="20" width="500" height="350" >
+					<browse_table schema="Default" entity="organizations" fk="FK_address_blocks organizations" x="960" y="20" width="500" height="350" record_view="y" />
+				</browse_table>
+			</browse_table>
+		</browser>
+		<query id="Query-2216" name="Query Builder" >
+			<query_table schema="Default" name="ip_addresses" alias="ia" x="48" y="48" >
+				<column name="id" />
+				<column name="org_id" />
+				<column name="ip_address" />
+				<column name="ip_type" />
+				<column name="reserved" />
+				<column name="assigned" />
+				<column name="new" />
+				<query_table schema="Default" name="address_blocks" alias="ab" x="208" y="48" fk="FK_address_blocks ip_addresses" type="Inner Join" >
+					<column name="id" />
+					<column name="org_id" />
+					<column name="network" />
+					<column name="start_ip" />
+					<column name="end_ip" />
+					<column name="broadcast" />
+					<column name="num_ip" />
+					<column name="new" />
+					<column name="assigned" />
+					<column name="linked" />
+					<query_table schema="Default" name="organizations" alias="o" x="384" y="48" fk="FK_address_blocks organizations" type="Inner Join" >
+						<column name="org_id" />
+						<column name="state" />
+						<column name="county" />
+						<column name="state_region_id" />
+						<column name="friendly_name" />
+						<column name="club_name" />
+						<column name="club_contact" />
+						<column name="ptp_net_size" />
+						<column name="device_net_size" />
+						<column name="block_size" />
+						<column name="share_ptp_net" />
+					</query_table>
+				</query_table>
+			</query_table>
+		</query>
+		<form name="Report" id="Report-897" template="Page" css="container-fluid" view="frame" >
+			<var name="samplePageNumber" type="4" value="0" mandatory="n" />
+			<var name="sampleRecordsPerPage" type="4" value="100" mandatory="n" />
+			<body name="Body" template="Grid" pos="0,0,0,0,f,f" layout="{{-2,-2,-2,-2,-1},{-2,-2,-2,-2}}" scroll="n" html="n" >
+				<cell type="label" name="Ip_addresses Data" template="H3" pos="0,0,1,0,l,c" />
+				<cell type="chart" name="Pie" template="Pie" pos="0,1,4,1,l,c" max_records="20" >
+					<form_script type="DataSource" language="SQL" >
+						<var name="id" type="4" />
+						<var name="org_id" type="4" />
+						<var name="ip_address" type="-1" />
+						<var name="ip_type" type="4" />
+						<var name="reserved" type="4" />
+						<var name="assigned" type="4" />
+						<var name="new" type="4" />
+						<script ><![CDATA[SELECT * FROM ip_addresses]]></script>
+					</form_script>
+					<param name="i0" value="ip_address" />
+					<param name="width" value="100%" />
+					<param name="v0" value="new" />
+					<param name="title" value="Sample Chart" />
+					<param name="height" value="400px" />
+				</cell>
+				<tableview name="sample" template="Table" css="table table-striped table-sm table-hover" pos="0,2,4,2,f,f" layout="{{-2,-2,-2,-2,-2,-2,-2},{-2,-2}}" scroll="n" html="n" header_rows="1" >
+					<form_script type="DataSource" language="SQL" >
+						<var name="id" type="4" />
+						<var name="org_id" type="4" />
+						<var name="ip_address" type="-1" />
+						<var name="ip_type" type="4" />
+						<var name="reserved" type="4" />
+						<var name="assigned" type="4" />
+						<var name="new" type="4" />
+						<script ><![CDATA[SELECT * FROM ip_addresses]]></script>
+					</form_script>
+					<cell type="label" name="id" pos="0,0,0,0,c,c" />
+					<cell type="label" name="org_id" pos="1,0,1,0,c,c" />
+					<cell type="label" name="ip_address" pos="2,0,2,0,c,c" />
+					<cell type="label" name="ip_type" pos="3,0,3,0,c,c" />
+					<cell type="label" name="reserved" pos="4,0,4,0,c,c" />
+					<cell type="label" name="assigned" pos="5,0,5,0,c,c" />
+					<cell type="label" name="Button can open other pages." pos="6,0,6,0,c,c" />
+					<cell type="label" name="${id}" template="Plain" pos="0,1,0,1,l,c" />
+					<cell type="label" name="${org_id}" template="Plain" pos="1,1,1,1,l,c" />
+					<cell type="label" name="${ip_address}" template="Plain" pos="2,1,2,1,l,c" />
+					<cell type="label" name="${ip_type}" template="Plain" pos="3,1,3,1,l,c" />
+					<cell type="label" name="${reserved}" template="Plain" pos="4,1,4,1,l,c" />
+					<cell type="label" name="${assigned}" template="Plain" pos="5,1,5,1,l,c" />
+					<cell type="button" name="More" template="Plain" css="btn btn-default btn-success" pos="6,1,6,1,c,c" ref_id="Report-897" />
+				</tableview>
+				<cell type="href" name="" disabled="${samplePageNumber&lt;1}" pos="0,3,0,3,l,c" glyph="FA-ANGLE_DOUBLE_LEFT" ref_id="Report-897" >
+					<var name="samplePageNumber" value="0" />
+				</cell>
+				<cell type="href" name="" disabled="${samplePageNumber&lt;1}" pos="1,3,1,3,l,c" glyph="FA-ANGLE_LEFT" ref_id="Report-897" >
+					<var name="samplePageNumber" value="${Math.max(0,samplePageNumber-1)}" />
+				</cell>
+				<cell type="label" name="Page ${samplePageNumber+1}" pos="2,3,2,3,l,c" />
+				<cell type="href" name="" disabled="${!sampleHasNextPage}" pos="3,3,3,3,l,c" glyph="FA-ANGLE_RIGHT" ref_id="Report-897" >
+					<var name="samplePageNumber" value="${( samplePageNumber+1 )}" />
+				</cell>
+			</body>
+		</form>
+	</layout>
+</project>
