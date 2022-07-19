@@ -1,19 +1,20 @@
 import argparse
-import traceback
 from argparse import ArgumentParser
 
+import sys
 import os
 import datetime
-import sys
-import re
 import sqlite3
-import requests
-import json
+
 from datetime import datetime
 import pandas as pd
-import ipaddress
+import numpy as np
 
 import logging
+
+# need ot set include path to parent directory
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, base_dir)
 from parsers.dbtools import DbSqlite
 
 """
@@ -23,16 +24,22 @@ db = None
 
 def main(args):
     global db
-    check_dirs(['./outputs', './logs'])
+    dirs = check_dirs(['outputs', 'logs'])
+    out_dir = dir[0]
+    log_dir = dirs[1]
     log_file = args.log
     now = datetime.now()
 
     if args.log is None:
-        log_file = './logs/' + 'create_blocks' + now.strftime("%Y_%m_%d_%H_%M_%S") + ".log"
+        log_file = '../logs/' + 'add_sites' + now.strftime("%Y_%m_%d_%H_%M_%S") + ".log"
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
     logging.info('Started" {}'.format(now.strftime("%H_%M_%S")))
+
+    # enable sqlite np.int64
+    sqlite3.register_adapter(np.int64, lambda val: int(val))
+    sqlite3.register_adapter(np.int32, lambda val: int(val))
 
     db = DbSqlite()
     db.connect(args.db)
@@ -41,14 +48,18 @@ def main(args):
     _type = db.getSiteType(args.type)
 
     query, records = get_query_args(args, org_id, _type)
-
     add_sites(db.conn,query, records)
     db.close()
 
 def check_dirs(dir_list):
-    for d in dir_list:
-        if not os.path.isdir(d):
-            os.makedirs(d)
+    global base_dir
+    dirs = []
+    for dir in dir_list:
+        path = os.path.join(base_dir, dir)
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        dirs.append(path)
+    return dirs
 
 def add_sites(conn, query, records):
 
@@ -119,13 +130,13 @@ if __name__ == '__main__':
     parser.add_argument('--lat', help='Site latitude in decimal degrees')
     parser.add_argument('--lon', help='Site longitude in decimal degrees')
 
-    parser.add_argument('--db', help='configuration db', default='./data/netplanning.sqlite3')
+    parser.add_argument('--db', help='configuration db', required=True)
     parser.add_argument('-l', '--log', default = None, help='logging file, default will be system name')
 
     if TEST == True:
-        #args = parser.parse_args(['-c', 'spokane', '--name', 'Krell'])
-        #args= parser.parse_args(['-c', 'spokane', '--csv','./templates/site_template.csv'])
-        #args = parser.parse_args(['-c', 'spokane','--csv', './templates/site_template.csv', '--name', 'Krell'])
+        in_args = ['-c', 'example_club', '--csv','../examples/site_example.csv','--db', '../data/planning_example.sqlite3']
+        #in_args = ['-c', 'spokane','--csv', '../examples/sites_spokane.csv', '--db', '../data/planning_spokane.sqlite3']
+        args = parser.parse_args(in_args)
     else:
         args = parser.parse_args()
         if args.name is None and args.csv is None:

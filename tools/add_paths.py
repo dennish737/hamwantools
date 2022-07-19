@@ -1,19 +1,18 @@
 import argparse
-import traceback
 from argparse import ArgumentParser
-
 import os
-import datetime
 import sys
-import re
-import sqlite3
-import requests
-import json
+import datetime
+
 from datetime import datetime
 import pandas as pd
-import ipaddress
 
 import logging
+
+# need ot set include path to parent directory
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+print("base_dir = ",base_dir)
+sys.path.insert(0, base_dir)
 from parsers.dbtools import DbSqlite
 
 """
@@ -24,12 +23,16 @@ db = None
 
 def main(args):
     global db
-    check_dirs(['./outputs', './logs'])
+
+    dirs = check_dirs(['outputs', 'logs'])
+    out_dir = dirs[0]
+    log_dir = dirs[1]
+
     log_file = args.log
     now = datetime.now()
 
     if args.log is None:
-        log_file = './logs/' + 'create_blocks' + now.strftime("%Y_%m_%d_%H_%M_%S") + ".log"
+        log_file = os.path.join(log_dir, ('add_paths' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
@@ -45,16 +48,18 @@ def main(args):
     site_data = db.getQueryData(site_query)
 
     query, records = get_query_args(args, org_id, site_data, _type)
-
-    #add_paths(db.conn,query, records)
-    print(query)
-    print(records)
+    add_paths(db.conn,query, records)
     db.close()
 
 def check_dirs(dir_list):
-    for d in dir_list:
-        if not os.path.isdir(d):
-            os.makedirs(d)
+    global base_dir
+    dirs = []
+    for dir in dir_list:
+        path = os.path.join(base_dir, dir)
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        dirs.append(path)
+    return dirs
 
 def get_query_args(args, org_id, site_data, _type):
     # normally user will pass in a single item from the command line, or use a csv
@@ -63,7 +68,7 @@ def get_query_args(args, org_id, site_data, _type):
     # db column names for organization table
     db_args = ['type_id', 'site_a', 'site_b', 'name']
     # need one '?' for each value added, total 4
-    value_args = 'VALUES(?,?,?,?);'
+    value_args = 'VALUES(?,?,?,?,?);'
     query = 'INSERT INTO paths ( org_id, ' + ','.join(db_args) + ') ' + value_args
 
     records = []
@@ -82,7 +87,7 @@ def get_query_args(args, org_id, site_data, _type):
         # note multiple orgs can be defined
         for i, row in df.iterrows():
             params = [org_id]
-            print("row.keys()=", row.keys())
+            #print("row.keys()=", row.keys())
             for j in range(len(db_args)):
                 if db_args[j] in row.keys():
                     if db_args[j] == 'site_a' or db_args[j] == 'site_b':
@@ -116,7 +121,7 @@ def add_paths(conn, query, records):
 
 if __name__ == '__main__':
 
-    TEST = True
+    TEST = False
     args = None
     parser: ArgumentParser = argparse.ArgumentParser()
     parser.add_argument('-c', '--club', help='club name',required=True)
@@ -129,14 +134,12 @@ if __name__ == '__main__':
                         choices=["BPTP", "CPTMP", "CPTP"],
                         help='Site type: BPTP | CPTMP | CPTP  (default: %(default)s')
 
-    parser.add_argument('--db', help='configuration db', default='./data/netplanning.sqlite3')
+    parser.add_argument('--db', help='configuration db', required=True)
     parser.add_argument('-l', '--log', default = None, help='logging file, default will be system name')
 
     if TEST == True:
-        #args = parser.parse_args(['-c', 'spokane', '--site1', 'SPODEM', '--site2', 'Krell'])
-        args= parser.parse_args(['-c', 'spokane', '--csv','./templates/path_template.csv'])
-        #args = parser.parse_args(['-c', 'spokane', '--site1', 'SPODEM', '--site2', 'Krell','--csv',
-        #    './templates/site_template.csv', '--name', 'Krell'])
+        args= parser.parse_args(['-c', 'example_club', '--csv','../examples/path_example.csv',  '--db', '../data/planning_example.sqlite3'])
+        #args = parser.parse_args(['-c', 'spokane', '--csv', '../examples/path_spokane.csv', '--db', '../data/planning_spokane.sqlite3'])
     else:
         args = parser.parse_args()
         if args.name is None and args.csv is None:

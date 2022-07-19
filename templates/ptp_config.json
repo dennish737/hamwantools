@@ -23,17 +23,11 @@
 									"protocol-mode": "rstp"
 								}
 							}]
-						},
-						"port_ether1": {
-							"command": "/interface bridge port",
-							"actions": [{
-								"action": "add",
-								"params": {
-									"interface": "ether1",
-									"bridge": "localloopback0"
-								}
-							}]
-						},
+						}
+					}
+				},
+				"ether1": {
+					"activities": {
 						"ip_address": {
 							"command": "/ip address",
 							"actions": [{
@@ -51,7 +45,7 @@
 						"create": {
 							"command": "/interface wireless",
 							"actions": [{
-								"action": "set [ find defaultname=wlan1 ]",
+								"action": "set [ find default-name=wlan1 ]",
 								"params": {
 									"band": "5ghz-onlyac",
 									"disabled": "no",
@@ -119,6 +113,15 @@
 			},
 			"global_ip": {
 				"activities": {
+					"settings": {
+						"command": "/ip settings",
+						"actions": [{
+							"action": "set",
+							"params": {
+								"send-redirects": "no"
+							}
+						}]
+					},
 					"firewall": {
 						"command": "/ip firewall mangle",
 						"actions": [{
