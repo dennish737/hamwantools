@@ -63,6 +63,29 @@ CREATE TABLE IF NOT EXISTS "organizations" (
 	PRIMARY KEY("org_id" AUTOINCREMENT)
 );
 
+--DROP TABLE IF EXISTS "general_params";
+CREATE TABLE IF NOT EXISTS "general_params" (
+    "id" INTEGER NOT NULL,
+    "org_id" INTEGER NOT NULL,
+    "wireless_name" TEXT NOT NULL,
+    "backbone_name" TEXT NOT NULL,
+    "time_zone" TEXT,
+    UNIQUE ("org_id")
+    FOREIGN KEY ("org_id") REFERENCES organizations("org_id")
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+--DROP TABLE IF EXISTS "network_services";
+CREATE TABLE IF NOT EXISTS "network_services" (
+    "id" INTEGER NOT NULL,
+    "org_id" INTEGER NOT NULL,
+    "service_type" TEXT NO NULL,
+    "service_name" TEXT NOT NULL,
+    "service_ip" TEXT,
+    FOREIGN KEY ("org_id") REFERENCES organizations("org_id")
+    PRIMARY KEY("id" AUTOINCREMENT)
+
+);
 --DROP TABLE IF EXISTS "network_allocations";
 CREATE TABLE IF NOT EXISTS "network_allocations" (
 	"id"	INTEGER NOT NULL,
@@ -165,11 +188,12 @@ CREATE TABLE IF NOT EXISTS "paths" (
 	FOREIGN KEY ("type_id") REFERENCES path_types(id),
 	FOREIGN KEY ("site_a") REFERENCES sites(id),
 	FOREIGN KEY ("site_b") REFERENCES sites(id),
-	FOREIGN KEY ("ip_block") REFERENCES ptp_block(id),
+	FOREIGN KEY ("ptp_block") REFERENCES ptp_block(id),
 	FOREIGN KEY ("device_a") REFERENCES site_equipment(id),
 	FOREIGN KEY ("device_b") REFERENCES site_equipment(id),
 	UNIQUE(site_a, device_a),
-	UNIQUE(site_b,device_b)
+	UNIQUE(site_b,device_b),
+	UNIQUE(ptp_block)
 );
 
 --DROP TABLE IF EXISTS "ptp_blocks";

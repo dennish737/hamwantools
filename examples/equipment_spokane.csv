@@ -1,5 +1,6 @@
 Site,group,model,serial_num
 SPODEM,gateway,,
+SPODEM,default_gateway,,
 SPODEM,ptp,,
 SPODEM,ptp,,
 KRELL,Router,,
