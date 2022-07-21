@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         args= parser.parse_args(['-c', 'example_club', '--csv','../examples/path_example.csv',  '--db', '../data/planning_example.sqlite3'])
-        #args = parser.parse_args(['-c', 'spokane', '--csv', '../examples/path_spokane.csv', '--db', '../data/planning_spokane.sqlite3'])
+        #args = parser.parse_args(['-c', 'spokane', '--csv', '../examples/path_spokane.csv', '--db', '../data/spokane_example.sqlite3'])
     else:
         args = parser.parse_args()
         if args.name is None and args.csv is None:

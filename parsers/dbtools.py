@@ -162,7 +162,9 @@ class DbSqlite():
 
         # we expect only one row to be returned
         if len(rows) > 1:
-            raise ValueError(f'more than one row returned for site type={name}')
+            raise ValueError('more than one row returned for site type={0}'.format(name))
+        if len(rows) == 0:
+            raise ValueError('site type={0} not found'.format(name))
         eqp_group_id = rows[0][0]
         eqp_suffix = rows[0][1]
         return (eqp_group_id, eqp_suffix)
@@ -275,7 +277,7 @@ class DbSqlite():
         return df
 
     def getSiteAvailableEquipmentInterfaces(self, org_id, site_id=None):
-        query = """SELECT s.name as "site", se.id as "e_id", se.name as "device_name", sg.interfaces as iface
+        query = """SELECT s.name as "site", se.id as "e_id", se.name as "device_name", sg.interface_list as ifaces
                 FROM sites s
                 INNER JOIN site_equipment se
                 ON se.site_id = s.id
@@ -291,14 +293,14 @@ class DbSqlite():
         df = self.getQueryData(query)
         new_data = []
         for idx, row in df.iterrows():
-            if_list = json.loads(row['iface'])
+            if_list = json.loads(row['ifaces'])
 
             for key, values in if_list.items():
                 for value in values:
                     new_row = {}
-                    # copy everything except iface
+                    # copy everything except ifaces
                     for row_key, row_value in row.items():
-                        if row_key != 'iface':
+                        if row_key != 'ifaces':
                             new_row[row_key] = row_value
                     new_row['if_type'] = key
                     new_row['if_name'] = value
