@@ -25,13 +25,14 @@ db = None
 def main(args):
     global db
     dirs = check_dirs(['outputs', 'logs'])
-    out_dir = dir[0]
+    out_dir = dirs[0]
     log_dir = dirs[1]
     log_file = args.log
     now = datetime.now()
 
     if args.log is None:
-        log_file = '../logs/' + 'add_sites' + now.strftime("%Y_%m_%d_%H_%M_%S") + ".log"
+        log_file = os.path.join(log_dir, ('add_paths' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
+    print(out_dir)
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
@@ -135,7 +136,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         in_args = ['-c', 'example_club', '--csv','../examples/site_example.csv','--db', '../data/planning_example.sqlite3']
-        #in_args = ['-c', 'spokane','--csv', '../examples/sites_spokane.csv', '--db', '../data/planning_spokane.sqlite3']
+        #in_args = ['-c', 'spokane','--csv', '../examples/sites_spokane.csv', '--db', '../data/spokane_example.sqlite3']
         args = parser.parse_args(in_args)
     else:
         args = parser.parse_args()

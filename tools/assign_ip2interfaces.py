@@ -19,7 +19,7 @@ sys.path.insert(0, base_dir)
 from parsers.dbtools import DbSqlite
 
 description = """
-assign_ip2_interfaces.py - this script assigns ip addresses to ether, ptp wlan and vrrp interfaces equipment. 
+assign_ip2interfaces.py - this script assigns ip addresses to ether, ptp wlan and vrrp interfaces equipment. 
 This tool can be used to assign addresses at the organization, site or equipment level. At the at the equipment level,
 only the equipment interfaces are added, at the site level, the interfaces of all the equipment are added and finally
 at the organizational level (default) all sites and equipment receive IP addresses. This tool currently does not 
@@ -39,7 +39,7 @@ def main(args):
     now = datetime.now()
 
     if args.log is None:
-        log_file = os.path.join(log_dir, ('add_ipaddresses' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
+        log_file = os.path.join(log_dir, ('add_ip2interfaces' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
@@ -65,6 +65,7 @@ def main(args):
     default_gateway_if = False
     ether_if = False
     backbone_if = False
+    print("args.assign=", args.assign)
     if args.assign.lower() == 'back':
         backbone_if = True
     elif args.assign.lower() == 'dftgw':
@@ -77,7 +78,10 @@ def main(args):
         backbone_if = True
 
     if default_gateway_if:
-        assign_default_gateway_interfaces(db, org_id, site_id, equip_id)
+        if args.default_ip is None:
+            assign_default_gateway_interfaces(db, org_id, site_id, equip_id)
+        else:
+            assign_default_gw_ip(db, org_id, site_id, equip_id, args.default_ip)
 
     if ether_if:
         assign_ether_interfaces(db, org_id, site_id, equip_id)
@@ -85,6 +89,11 @@ def main(args):
     if backbone_if:
         assign_backbone_interfaces(db,org_id, site_id, equip_id)
 
+
+def assign_default_gw_ip(db, org_id, site_id, equip_id, default_ip):
+    logging.info("User setting gateway default ip to {0}".format(default_ip))
+    print("User setting gateway default ip to {0}".format(default_ip))
+    print("not implemented")
 
 def assign_default_gateway_interfaces(db, org_id, site_id, equip_id):
     logging.info("starting assign_default_gateway")
@@ -234,6 +243,7 @@ if __name__ == '__main__':
     parser.add_argument('--dftgw', help='Assign addresses to the default gateway vrrp interfaces', action='store_true')
     parser.add_argument('--ether', help='Assign addresses to ether interfaces', action='store_true')
     parser.add_argument('--back', help='Assign Addresses to backbone interfaces', action='store_true')
+    parser.add_argument('--default_ip', help='IP address to use for default ip', default=None)
     parser.add_argument('--assign', default='all', const='all',
                         nargs='?',
                         choices=["all", "dftgw", "ether", "ptp"],

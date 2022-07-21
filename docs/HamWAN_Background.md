@@ -47,3 +47,11 @@ If the number of P2P connections are less than 64, then you only need 128 addres
 site routers and P2P wlan can share a 256 network address space.
 
 # Selecting Equipment
+HamWAN has recommendations for each of the components in the system. There 
+are multiple devices select, which will all allow for various designs of
+client, and backbone connections.
+
+For our systems we are using the following devices:
+
+Backbone Device: Mikrotik Net Metal 5 - RB922UAGS-5HPacD-NM
+Sectors: Mikrotik RB912UAGPnD + StationBox S

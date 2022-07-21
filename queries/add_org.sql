@@ -25,8 +25,8 @@
 -- 10) share_ptp_net -> default 0 : do not share
 
 -- example script to add an organization
-
-INSERT INTO organizations (club_name,club_contact,friendly_name,state,county,state_region_id,ptp_net_size,
+BEGIN;
+INSERT OR REPLACE INTO organizations (club_name,club_contact,friendly_name,state,county,state_region_id,ptp_net_size,
     device_net_size,block_size,share_ptp_net)
-VALUES ('example_club','somebody','MyClub','MyState','Some_where',NULL,256,256,16,0)
+VALUES ('example_club','somebody','MyClub','Somewhere','NoWhere',NULL,256,256,16,0)
 COMMIT;

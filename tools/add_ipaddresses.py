@@ -18,8 +18,14 @@ base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
 from parsers.dbtools import DbSqlite
 
-"""
-python script to divide an ip address allocation into blocks
+description = """
+add_ipaddresses.py - An organization can have one or more address allocations, and these allocations need to be broken
+down into pool, paths and devices IP addresses. Device IP are use for ether interfaces, and each piece of equipment has 
+at least one ether interface. Path IP addresses are two ip addresses, uni-distant apart (think /31 networks) and are
+used for PTP links. Finally pool ip are used to connect to clients using PTMP connections.
+This tool looks for a network allocations which have not been process, add  the IP addresses to the available IP list,
+assign a type (pool, ptp, device), reserves the network and broadcast addresses for the 'device network', and build the 
+address block and ptp blocks for the system.
 """
 # dict <CIDR>:<num_addresses>
 block_sizes = {16:65536,17:32768,18:16384, 19:8192, 20:4096, 21:2048, 22:1024, 23:512, 24:256, 25:128, 26:64, 27:32, 28:16}
@@ -89,9 +95,9 @@ def main(args):
                             ip_type))
         save_addresses(db, records)
         # add CIDR /31 to ptp addresses
-        update_ptp_addresses(db)
-        update_device_addresses(db)
-        update_pool_addresses(db)
+        update_ptp_addresses(db, org_id)
+        update_device_addresses(db, org_id)
+        update_pool_addresses(db, org_id)
 
     # create address pools (blocks)
     # get the address to pool
@@ -152,12 +158,12 @@ def get_number_of_addresses(start, end):
 
 
 def save_addresses(db, records):
-    query = 'INSERT INTO ip_addresses (org_id, ip_address, ip_type) VALUES(?,?,?);'
+    query = 'INSERT OR IGNORE INTO ip_addresses (org_id, ip_address, ip_type) VALUES(?,?,?);'
     cursor = db.conn.cursor()
     cursor.executemany(query,records)
     db.conn.commit()
 
-def update_ptp_addresses(db):
+def update_ptp_addresses(db, org_id):
     query1 = 'UPDATE ip_addresses set ip_address = ip_address || "/32" where new = 1 AND ip_type = (select id from ip_types where type_name = "ptp");'
     cursor = db.conn.cursor()
     cursor.execute(query1)
@@ -165,18 +171,37 @@ def update_ptp_addresses(db):
     cursor.execute(query2)
     db.conn.commit()
 
-def update_device_addresses(db):
-    query1 = 'UPDATE ip_addresses set ip_address = ip_address || "/32" where new = 1 AND ip_type = (select id from ip_types where type_name = "device");'
+def update_device_addresses(db, org_id):
+    query = """SELECT min(id) as ip_id, ip_address FROM ip_addresses 
+        WHERE org_id = ? AND ip_type = (SELECT y.id FROM ip_types y WHERE lower(y.type_name) = 'device')"""
     cursor = db.conn.cursor()
-    cursor.execute(query1)
-    query2 = 'UPDATE ip_addresses set new = 0 where new = 1 AND ip_type = (select id from ip_types where type_name = "device");'
-    cursor.execute(query2)
+    cursor.execute(query, (org_id,))
+    row = cursor.fetchone()
+    min_id = None
+    ip_address = None
+    if row is not None:
+        mn_id = row['ip_id']
+        ip = row['ip_address']
+        print("min id = ", mn_id, "  ip_addr = ", ip)
+        # check if we need to reserve the first address
+        cursor.close()
+
+    cursor = db.conn.cursor()
+    s = ip.split('.')
+    if s[3] == '0':
+        # reserve first ip
+        update_query = 'UPDATE ip_addresses SET new = 0,  reserved = 1 WHERE org_id= ? AND id = ?;'
+        cursor.execute(update_query, (org_id, mn_id,))
+    query1 = 'UPDATE ip_addresses set ip_address = ip_address || "/32" WHERE org_id= ? AND new = 1 AND ip_type = (select id from ip_types where type_name = "device");'
+    cursor.execute(query1, (org_id,))
+    query2 = 'UPDATE ip_addresses set new = 0 WHERE org_id = ? AND new = 1 AND ip_type = (select id from ip_types where type_name = "device");'
+    cursor.execute(query2, (org_id,))
     db.conn.commit()
 
-def update_pool_addresses(db):
-    query = 'UPDATE ip_addresses set new = 0 where new = 1 AND ip_type = (select id from ip_types where type_name = "pool");'
+def update_pool_addresses(db, org_id):
+    query = 'UPDATE ip_addresses set new = 0 WHERE org_id = ? AND new = 1 AND ip_type = (select id from ip_types where type_name = "pool");'
     cursor = db.conn.cursor()
-    cursor.execute(query)
+    cursor.execute(query, (org_id,))
     db.conn.commit()
 
 def generate_pool_blocks( pool_addresses, org_id,block_size):
@@ -295,7 +320,7 @@ if __name__ == '__main__':
 
     TEST = False
     args = None
-    parser: ArgumentParser = argparse.ArgumentParser()
+    parser: ArgumentParser = argparse.ArgumentParser(description=description)
     parser.add_argument('-c', '--club', help='club name')
     parser.add_argument('--club_id', help='club id', default=None)
 
@@ -307,7 +332,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         args= parser.parse_args(['-c','example_club', '--db', '../data/planning_example.sqlite3'])
-        #args = parser.parse_args(['-c', 'spokane','--db', '../data/planning_spokane.sqlite3'])
+        #args = parser.parse_args(['-c', 'spokane','--db', '../data/example_spokane.sqlite3'])
     else:
         args = parser.parse_args()
 

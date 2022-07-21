@@ -83,6 +83,10 @@ into a database table, with additional tables for address blocks and ptp blocks 
  2) Edit the file for your organization
  3) Click the run button
 
+### Add General Information
+
+### Add Services
+
 ### add Security information
  1) open the ./queries/add_service_keys.sql in DB Browser Execute SQL window
  2) Edit the key_val values for your organization
@@ -115,7 +119,16 @@ Example:python ./tools/add_equipment2path.py -c example_club --db ./data/plannin
 Example:python ./tools/add_interfaces.py -c example_club --db ./data/planning_example.sqlite3
 
 ### Add network allocation
+ 1) open the ./queries/add_netalloc.sql in DB Browser Execute SQL window
+ 2) Edit the club name  value for your organization
+ 3) Edit network_allocation, starting_address, ending_address, subnet_mask values
+ 4) Click the run button
+ 5) 
+### Add IP Address addresses
 
-### Add IP Address allocation
+python ./tools/add_ipaddresses.py -c spokane  --db ./data/spokane_example.sqlite3 
 
+### Assign addresses equipment ether for all devices, and all ptp paths wlan
+
+python ./tools/assign_ip2interfaces.py -c spokane --assign dftgw  --db ./data/spokane_example.sqlite3
 

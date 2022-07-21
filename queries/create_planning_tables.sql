@@ -6,22 +6,64 @@
 -- Version 1.0.0
 
 --PRAGMA foreign_keys = OFF;
+
+commit;
+BEGIN TRANSACTION;
+--DROP TABLE IF EXISTS "organizations";
+CREATE TABLE IF NOT EXISTS "organizations" (
+    -- identifies the organization. In most cases there is only one organization in the data base
+    -- but this feature allows you to segment your network and have areas of ownership, while still providing
+    -- centralize management.
+	"org_id"	INTEGER NOT NULL,
+	"state"	TEXT,
+	"county"	TEXT,
+	"state_region_id"	INTEGER,
+	"friendly_name"	TEXT,
+	"club_name"	TEXT NOT NULL UNIQUE,
+	"club_contact"	TEXT,
+	"ptp_net_size"	INTEGER NOT NULL DEFAULT 256,   -- number of ip addresses reserve for PTP connections (2 per PTP path + )
+	"device_net_size"	INTEGER NOT NULL DEFAULT 256,   -- number of ip addresses reserved for equipment (min 1 per ether if + 1 vrrp)
+	"block_size"	INTEGER NOT NULL DEFAULT 16,    -- min number of ip addresses added to a dhcp pool
+	"share_ptp_net" INTEGER NOT NULL DEFAULT 0,     -- split a single class C network between PTP and Devices
+	PRIMARY KEY("org_id" AUTOINCREMENT)
+);
+
+--DROP TABLE IF EXISTS "config_templates";
+CREATE TABLE IF NOT EXISTS "config_templates" (
+    "id" INTEGER NOT NULL,
+    "org_id" INTEGER,
+    "name" TEXT,
+    "file" TEXT,
+    "version" TEXT,
+    FOREIGN KEY("org_id") REFERENCES "organizations"("org_id"),
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
 --DROP TABLE IF EXISTS "equipment_groups";
 CREATE TABLE IF NOT EXISTS "equipment_groups" (
+    -- the equipment groups allow us to define the different pieces of equipment that are used in the
+    -- network. It also allows us to link the configuration templates, used to configure the devices
 	"id"	INTEGER NOT NULL,
-	"group_name" TEXT NOT NULL,
+	"group_name" TEXT NOT NULL UNIQUE, --group name (router, sector, bptp, cptmp, gateway and default_gaeway
 	"description"	TEXT NOT NULL,
-	"suffix"	TEXT NOT NULL,
-	"interfaces" json,
+	"suffix"	TEXT NOT NULL,  -- name suffix. device names are site.group_suffixn where
+	                            -- suffix are R, S, PTP, CTMP, GW, DGW, and n is the number [1...n], DGW defines the virtual router(s)
+	"config_id" INTEGER,
+	"interface_list" json,          -- devices can have multiple interfaces
+	FOREIGN KEY(config_id) REFERENCES "config_templates"(id),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
 
 --DROP TABLE IF EXISTS "site_types";
 CREATE TABLE IF NOT EXISTS "site_types" (
+    -- site_types:
+        -- cell: a standard cell site with PTP and SECTOR connections to other cells and clients -> cell
+        -- gateway: A cell site with a connection to an internet provider -> gw
+        -- client: A client site -> c
 	"id"	INTEGER NOT NULL,
 	"description"	TEXT NOT NULL,
-	"identifier"	TEXT NOT NULL,
+	"identifier"	TEXT NOT NULL UNIQUE,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
@@ -29,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "site_types" (
 CREATE TABLE IF NOT EXISTS "path_types" (
     "id"	INTEGER NOT NULL,
     "description" TEXT NOT NULL,
-    "identifier" INTEGER NOT NULL,
+    "identifier" INTEGER NOT NULL UNIQUE,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
@@ -41,7 +83,7 @@ CREATE TABLE IF NOT EXISTS "path_types" (
 CREATE TABLE IF NOT EXISTS "services_pwd" (
 	"id"	INTEGER NOT NULL,
 	"org_id" INTEGER NOT NULL,
-	"tag"	TEXT NOT NULL,
+	"tag"	TEXT NOT NULL,  -- wirelesskey, backbonekey, vrrpkey, ospfkey or ospgkeyn for multiple areas
 	"passwd"	TEXT NOT NULL,
 	FOREIGN KEY(org_id) REFERENCES organizations("org_id"),
 	PRIMARY KEY("id" AUTOINCREMENT)
@@ -49,6 +91,9 @@ CREATE TABLE IF NOT EXISTS "services_pwd" (
 
 --DROP TABLE IF EXISTS "organizations";
 CREATE TABLE IF NOT EXISTS "organizations" (
+    -- identifies the organization. In most cases there is only one organization in the data base
+    -- but this feature allows you to segment your network and have areas of ownership, while still providing
+    -- centralize management.
 	"org_id"	INTEGER NOT NULL,
 	"state"	TEXT,
 	"county"	TEXT,
@@ -56,15 +101,22 @@ CREATE TABLE IF NOT EXISTS "organizations" (
 	"friendly_name"	TEXT,
 	"club_name"	TEXT NOT NULL UNIQUE,
 	"club_contact"	TEXT,
-	"ptp_net_size"	INTEGER NOT NULL DEFAULT 256,
-	"device_net_size"	INTEGER NOT NULL DEFAULT 256,
-	"block_size"	INTEGER NOT NULL DEFAULT 16,
-	"share_ptp_net" INTEGER NOT NULL DEFAULT 0,
+	"ptp_net_size"	INTEGER NOT NULL DEFAULT 256,   -- number of ip addresses reserve for PTP connections (2 per PTP path + )
+	"device_net_size"	INTEGER NOT NULL DEFAULT 256,   -- number of ip addresses reserved for equipment (min 1 per ether if + 1 vrrp)
+	"block_size"	INTEGER NOT NULL DEFAULT 16,    -- min number of ip addresses added to a dhcp pool
+	"share_ptp_net" INTEGER NOT NULL DEFAULT 0,     -- split a single class C network between PTP and Devices
 	PRIMARY KEY("org_id" AUTOINCREMENT)
 );
 
 --DROP TABLE IF EXISTS "general_params";
 CREATE TABLE IF NOT EXISTS "general_params" (
+    -- There are several parameters that HamWAN uses that are organization wide
+    -- These include:
+        -- the SSID name used for client connections (wireless_name)
+        -- The SSID used to identify the backbone network (backbone_name)
+        -- The network time zone (time_zone)
+    -- The choice of having separate or the same SSID for client and backbone is up to
+    -- the organization.
     "id" INTEGER NOT NULL,
     "org_id" INTEGER NOT NULL,
     "wireless_name" TEXT NOT NULL,
@@ -77,17 +129,25 @@ CREATE TABLE IF NOT EXISTS "general_params" (
 
 --DROP TABLE IF EXISTS "network_services";
 CREATE TABLE IF NOT EXISTS "network_services" (
+    -- network_services, the services like DNS, NTP and Logging are systems are required for the network
+    -- once these networks are set up, the other network devices will use then.
+    -- Currently the only known service types are dns, ntp and logging
     "id" INTEGER NOT NULL,
     "org_id" INTEGER NOT NULL,
     "service_type" TEXT NO NULL,
     "service_name" TEXT NOT NULL,
-    "service_ip" TEXT,
-    FOREIGN KEY ("org_id") REFERENCES organizations("org_id")
+    "service_ip" INTEGER,
+    FOREIGN KEY ("org_id") REFERENCES organizations("org_id"),
+    FOREIGN KEY (service_ip) REFERENCES ip_addresses(id),
     PRIMARY KEY("id" AUTOINCREMENT)
 
 );
+
 --DROP TABLE IF EXISTS "network_allocations";
 CREATE TABLE IF NOT EXISTS "network_allocations" (
+    -- Address allocation are provided by HamWan, and then sub divided down for the network
+    -- in theory, you can get multiple allocations, and different allocation for each organization
+    -- blocks_created is set to 1 when the addresses are allocated out to the network
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"network_allocation"	TEXT NOT NULL,
@@ -101,6 +161,10 @@ CREATE TABLE IF NOT EXISTS "network_allocations" (
 
 --DROP TABLE IF EXISTS "ip_types";
 CREATE TABLE IF NOT EXISTS "ip_types" (
+    -- There are three ip types in the network:
+    --  pool: ip addresses that are allocated to DHCP pools as needed
+    --  ptp: ip addresses  that are to be allocated to ptp addresses
+    --  devices ip addresses to be allocated to the devices ether addresses
     "id"	INTEGER NOT NULL,
     type_name TEXT NOT NULL UNIQUE,
     PRIMARY KEY("id" AUTOINCREMENT)
@@ -108,6 +172,14 @@ CREATE TABLE IF NOT EXISTS "ip_types" (
 
 --DROP TABLE IF EXISTS "ip_addresses";
 CREATE TABLE IF NOT EXISTS "ip_addresses" (
+    -- Given an allocation, an entry is generated for each ip address
+    -- the reserved field allows ot to assign ip_addresses to pools and ptp blocks
+    -- the non zero value of reserved represent the address_block or ptp_block that reserved
+    -- the address
+    -- the value of the assigned field, represent the interface the address is assigned to
+    -- 0  means unassigned
+    -- new is set to zero after the ip addresses is added, assigned a type and if pool or ptp
+    -- reserved.
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"ip_address"	TEXT NOT NULL UNIQUE,
@@ -122,6 +194,7 @@ CREATE TABLE IF NOT EXISTS "ip_addresses" (
 
 --DROP TABLE IF EXISTS "address_blocks";
 CREATE TABLE IF NOT EXISTS "address_blocks" (
+    -- pool address blocks
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"network"	INTEGER NOT NULL,
@@ -142,6 +215,7 @@ CREATE TABLE IF NOT EXISTS "address_blocks" (
 
 --DROP TABLE IF EXISTS "sites";
 CREATE TABLE IF NOT EXISTS "sites" (
+    -- the cell or client site information
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"site_type" INTEGER NOT NULL,
@@ -160,6 +234,7 @@ CREATE TABLE IF NOT EXISTS "sites" (
 
 --DROP TABLE IF EXISTS "site_equipment";
 CREATE TABLE IF NOT EXISTS "site_equipment" (
+    -- equipment assigned to a site
 	"id"	INTEGER NOT NULL,
 	"site_id"	INTEGER NOT NULL,
 	"group_id"   INTEGER NOT NULL,
@@ -172,8 +247,10 @@ CREATE TABLE IF NOT EXISTS "site_equipment" (
 	FOREIGN KEY ("group_id") REFERENCES equipment_groups(id)
 );
 
---DROP TABLE IF EXISTS "paths";
+DROP TABLE IF EXISTS "paths";
 CREATE TABLE IF NOT EXISTS "paths" (
+    -- wireless path between sites. Most commonly used for PTP paths, but can also
+    -- be used to document multiple paths to a client
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"type_id"   INTEGER NOT NULL,
@@ -184,7 +261,7 @@ CREATE TABLE IF NOT EXISTS "paths" (
 	"device_b"   INTEGER,
 	"name"	    TEXT NOT NULL UNIQUE,
 	PRIMARY KEY("id" AUTOINCREMENT),
-	FOREIGN KEY ("org_id") REFERENCES organizations(id),
+	FOREIGN KEY ("org_id") REFERENCES organizations(org_id),
 	FOREIGN KEY ("type_id") REFERENCES path_types(id),
 	FOREIGN KEY ("site_a") REFERENCES sites(id),
 	FOREIGN KEY ("site_b") REFERENCES sites(id),
@@ -198,6 +275,7 @@ CREATE TABLE IF NOT EXISTS "paths" (
 
 --DROP TABLE IF EXISTS "ptp_blocks";
 CREATE TABLE IF NOT EXISTS "ptp_blocks" (
+    -- ptp address block
 	"id"	INTEGER NOT NULL,
 	"org_id"	INTEGER NOT NULL,
 	"ip_a"	INTEGER NOT NULL,
@@ -215,6 +293,7 @@ CREATE TABLE IF NOT EXISTS "ptp_blocks" (
 
 --DROP TABLE IF EXISTS "interfaces";
 CREATE TABLE IF NOT EXISTS "interfaces" (
+    --physical network interfaces
     "id" INTEGER NOT NULL,
     "equip_id" INTEGER NOT NULL,
     "if_type" TEXT  NOT NULL,
@@ -225,3 +304,7 @@ CREATE TABLE IF NOT EXISTS "interfaces" (
     UNIQUE("equip_id", "if_name")
     PRIMARY KEY("id" AUTOINCREMENT)
     );
+
+COMMIT;
+
+--PRAGMA foreign_keys = ON;
