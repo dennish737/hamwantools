@@ -31,12 +31,12 @@ from commands.socks import Socks
 from commands.users import Users
 from commands.version import Version
 
-from parsers.dbtools import DbSqlite
-from parsers.parseglobal_ip import ParseGlobalIP
-from parsers.parseinterface import ParseInterfaces
-from parsers.parserouting import ParseRouting
-from parsers.parsesnmp import ParseSNMP
-from parsers.parsesystem import ParseSystem
+from libs.dbtools import DbSqlite
+from libs.parseglobal_ip import ParseGlobalIP
+from libs.parseinterface import ParseInterfaces
+from libs.parserouting import ParseRouting
+from libs.parsesnmp import ParseSNMP
+from libs.parsesystem import ParseSystem
 
 import query_nvd
 

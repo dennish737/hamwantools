@@ -17,7 +17,7 @@ import logging
 # need ot set include path to parent directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
-from parsers.dbtools import DbSqlite
+from libs.dbtools import DbSqlite
 
 def main(args):
     dirs = check_dirs(['outputs', 'logs'])
@@ -28,7 +28,7 @@ def main(args):
     now = datetime.now()
 
     if args.log is None:
-        log_file = os.path.join(log_dir, ('add_paths' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
+        log_file = os.path.join(log_dir, ('add_equipment2path' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
@@ -38,8 +38,11 @@ def main(args):
     db.connect(args.db)
 
     org_id = db.getOrganizationId(args.club)
+    logging.info("adding equipment to path for organization={0} ,org_id = {1}".format(args.club, org_id))
+
     if args.path is not None:
         # user want to add equipment to a specific path
+        logging.info("adding equipment to path {0} ".format(args.path))
         query = 'SELECT * FROM paths WHERE org_id = {0} AND name = {1};'
         path_data = db.getQueryData(query.format(org_id, args.path))
         if len(path_data) > 0:
@@ -49,6 +52,7 @@ def main(args):
             exit(1)
     else:
         # assign equipment to all paths needing equipment
+        logging.info("adding equipment to all paths for org_id = {0} ".format(org_id))
         query = 'SELECT * FROM paths WHERE org_id = {};'
         path_data = db.getQueryData(query.format(org_id))
         if len(path_data) > 0:
@@ -70,10 +74,12 @@ def check_dirs(dir_list):
     return dirs
 
 def process_path_equipment(db, org_id, paths, equip_a=None, equip_b=None):
+    logging.info("starting process_path_equipment, org_id={0}, paths={1}".format(org_id,paths))
     for idx, row in paths.iterrows():
         path_id = row['id']
         if equip_a is None:
             if row["device_a"] is None:
+                logging.info("get the first ptp device for site = {0}".format(row['site_a']))
                 id_a, name_a = db.getFirstAvailablePTP(row['site_a'])
             else:
                 name = db.getEquipmentName(row['device_a'])
@@ -133,7 +139,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         args= parser.parse_args(['-c', 'example_club', '--db', '../data/planning_example.sqlite3'])
-        #args = parser.parse_args(['-c', 'spokane', '--db', '../data/planning_spokane.sqlite3'])
+        #args = parser.parse_args(['-c', 'spokane', '--db', '../data/spokane_example.sqlite3'])
     else:
         args = parser.parse_args()
 

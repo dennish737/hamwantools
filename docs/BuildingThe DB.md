@@ -4,13 +4,15 @@ As stated in the planning document it is important to document your network. Aga
 a several way to do this, and you should use a method that you are conformable with. Because of the complexity
 of networks, and the multiple pieces of information that needs to be tracked, I have chosen
 to use a SQLite Database. The key reasons for using a DB are:
-    - Able to add and link data items in small chunks
-    - Able to develop queries and tools for adding items reducing manual error
-    - Able to build tools to 'map' the network
+    - After initial load it is easy to maintain
+    - Able to add and link data items to configuration parameters
+    - Able to develop queries and tools for getting configuration parameters reducing manual error
+    - Able to develop queries and tools for adding, deleting and moving data items
     - Able to build tools to generate configuration file for devices
     - Able to easily add new devices and configuration parameters to the network
+    - Able to build tools to 'map' the network
     - SQLite is supported on Windows, linux and Mac platforms.
-    - Database is a file, which can be shared
+    - Database is a file, which can be shared and made profitable
 
 For tool development I have chosen to use Python3. Python3 is supported by Windows, linux and Mac,
 is object-oriented, and well documented and supported.
@@ -51,10 +53,18 @@ and path (primarily backbone PTP paths). We also talked about getting a block of
 your network, and creating an organization to build and control the site. Each of these translates
 into a database table, with additional tables for address blocks and ptp blocks and ip_addresses.
 
+As we build out the DB, python tools were written to build out tables. For example on site equipment,
+the input is a CSV file, but we do not require the equipment name. Instead, the tools automatically
+build the name for you. 
+
+
 ### DB Schema
+The following is an image of the DB schema:
 ![DB Schema](./images/DBSchema.JPG)
 
-### Creating the DB, adding tables and  types
+TBD - add description of tables
+
+## Creating the DB, adding tables and  types
 
 ### Creating 
  1) open DB Browser
@@ -71,6 +81,20 @@ into a database table, with additional tables for address blocks and ptp blocks 
  4) Select the ../query/create_planning_tables.sql
  5) Click the run button ![Run Create Table](./images/dbbrowser_createexec.jpg)
 
+#### Adding cdir table
+CIDR stands for Classlesss Inter-Domain Routing. It enables network administrators to group 
+blocks of IP addresses into single routing networks. 
+
+CIDR accomplishes the same task as traditional subnet masking
+
+This table is provided as a support tool for looking up CIDR value
+
+ 1) open DB Browser
+ 2) Open your database 
+ 3) select File -> Import
+ 4) select the file ./examples/cidr_mask.csv
+ 5) click Ok
+
 #### Add type information
  1) open DB Browser
  2) Open your database 
@@ -79,28 +103,44 @@ into a database table, with additional tables for address blocks and ptp blocks 
  5) Click the run button
 
 ### Add Organization
+All sites, paths and equipment are associated with an Organization, and the organization is responsible
+for the installation, maintenance and disposal of the equipment assigned to the organization.
+
  1) open the ./queries/add_org.sql in DB Browser Execute SQL window
  2) Edit the file for your organization
  3) Click the run button
 
+### Adding your Sites
+To add sites, we are going to use the tool add_sites.py (./tools/add_sites.py). In our 
+[Planning Your Network](./PlanningYourNetwork.md) discussion, we created a list of sites in a csv file.
+Our tool can use a .csv file to enter multiple sites (see [equipment_example](../examples/site_example.csv))
+
+Before running the tool, use the ../examples/site_example.csv as a template to create your
+information. Once done editing the template, run the tool to add your sites.  
+
+Example: python ./tools/add_sites.py -c example_club --csv ./examples/site_example.csv --db ./data/planning_example.sqlite3
+
+### Adding your Backbone PTP paths
+Next we want to add our backbone path information (BPTP). In our 
+[Planning Your Network](./PlanningYourNetwork.md) discussion, we created a list of paths in a csv file.
+
+Before running the tool, use the ../examples/path_example.csv as a template to create your
+information. Once done editing the template, run the tool to add your paths. 
+
+Example:  python ./tools/add_paths.py -c example_club --csv ./examples/path_example.csv --db ./data/planning_example.sqlite3
+
 ### add Security information
+There are several 'keys' that are required to allow the various routers and switches
+to inter connect. You can set the keys for a 'site', for the network as a whole or
+both. The database has a service_keys table that allow you to assign keys at the 
+network and site levels. 
+By leaving the 'site' number blank, defines a default set of keys that are applied network
+wide. If a site id is provided, then the site keys will override the default keys.
+
  1) open the ./queries/add_service_keys.sql in DB Browser Execute SQL window
  2) Edit the key_val values for your organization
  3) Click the run button
 
-### Adding your Sites
-To add sites, we are going to use the tool add_sites.py (./tools/add_sites.py). In our 
-[Planning Your Network](./PlanningYourNetwork.md) discussion, we created a list of sites.
-Out tool allows use a .csv file to enter multiple sites (see [equipment_example](../examples/site_example.csv))
-
-Before running the tool, use the ../examples/site_example.csv as a template to create your
-information. Once done editing the template, run the tool to add your sites.  
-Example: python ./tools/add_sites.py -c example_club --csv ./examples/site_example.csv --db ./data/planning_example.sqlite3
-
-### Adding your paths
-
-
-Example:  python ./tools/add_paths.py -c example_club --csv ./examples/path_example.csv --db ./data/planning_example.sqlite3
 
 ### Add Equipment to sites
 
@@ -115,7 +155,10 @@ Example:python ./tools/add_equipment2path.py -c example_club --db ./data/plannin
 Example:python ./tools/add_interfaces.py -c example_club --db ./data/planning_example.sqlite3
 
 ### Add network allocation
+ use add_netaloc.sql
+### Construction your allocation and ptp blocks
 
-### Add IP Address allocation
+Example:python ./tools/add_ipaddresses.py -c example_club --db ./data/planning_example.sqlite3
+
 
 

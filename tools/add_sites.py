@@ -15,7 +15,7 @@ import logging
 # need ot set include path to parent directory
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
-from parsers.dbtools import DbSqlite
+from libs.dbtools import DbSqlite
 
 """
 tool to add one or more sites to an organization
@@ -25,21 +25,18 @@ db = None
 def main(args):
     global db
     dirs = check_dirs(['outputs', 'logs'])
-    out_dir = dir[0]
+    out_dir = dirs[0]
     log_dir = dirs[1]
+    print("dirs = ",dirs)
     log_file = args.log
     now = datetime.now()
 
     if args.log is None:
-        log_file = '../logs/' + 'add_sites' + now.strftime("%Y_%m_%d_%H_%M_%S") + ".log"
+        log_file = os.path.join(log_dir, ('add_sites' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
     logging.info('Started" {}'.format(now.strftime("%H_%M_%S")))
-
-    # enable sqlite np.int64
-    sqlite3.register_adapter(np.int64, lambda val: int(val))
-    sqlite3.register_adapter(np.int32, lambda val: int(val))
 
     db = DbSqlite()
     db.connect(args.db)
@@ -135,7 +132,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         in_args = ['-c', 'example_club', '--csv','../examples/site_example.csv','--db', '../data/planning_example.sqlite3']
-        #in_args = ['-c', 'spokane','--csv', '../examples/sites_spokane.csv', '--db', '../data/planning_spokane.sqlite3']
+        #in_args = ['-c', 'spokane','--csv', '../examples/sites_spokane.csv', '--db', '../data/spokane_example.sqlite3']
         args = parser.parse_args(in_args)
     else:
         args = parser.parse_args()

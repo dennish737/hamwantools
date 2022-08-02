@@ -29,6 +29,5 @@
 INSERT INTO organizations (club_name,club_contact,friendly_name,state,county,state_region_id,ptp_net_size,
     device_net_size,block_size,share_ptp_net)
 VALUES ('example_club','somebody','MyClub','MyState','Some_where',NULL,256,256,16,0)
---INSERT INTO organizations (state,county,state_region_id, friendly_name, club_name )
---VALUES ('Washington','Spokane', 'Spokane', 'spokane' );
+--VALUES ('spokane','somebody','Spokane','Washington','Spokane',NULL,256,256,16,0);
 COMMIT;

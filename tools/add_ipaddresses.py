@@ -16,7 +16,7 @@ import logging
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
-from parsers.dbtools import DbSqlite
+from libs.dbtools import DbSqlite
 
 """
 python script to divide an ip address allocation into blocks
@@ -57,24 +57,57 @@ def main(args):
     ptp_size = organization_params['ptp_net_size']
     device_net_size = organization_params['device_net_size']
     block_size_mask = list(block_sizes.keys())[list(block_sizes.values()).index(block_size)]
-
     # get all allocations for club
-    df = get_unblocked_network_allocations(org_id, db)
-    if len(df) < 1:
+    allocations = get_unblocked_network_allocations(org_id, db)
+    if len(allocations) < 1:
         logging.info("no network allocation available, exiting")
         print("No network allocation available, exiting ")
         exit(0)
-    logging.info("allocations = " + df.to_string().replace('\n', '\n\t'))
+    logging.info("allocations = " + allocations.to_string().replace('\n', '\n\t'))
+
+    generate_address_blocks(db, org_id, allocations, device_net_size, ptp_size)
+    update_allocation_record(db, org_id)
+    # create address pools (blocks)
+    number_of_blocks = create_pool_blocks(db, org_id, organization_params)
+    logging.info("number of pool blocks = {0}, created.".format(number_of_blocks))
 
 
-    device_offset = device_net_size
+    # add ptp_blocks
+    number_of_ptp_blocks = create_ptp_blocks(db, org_id)
+    logging.info("number of ptp blocks = {0}, created.".format(number_of_ptp_blocks))
+
+    reserve_and_assign_blocks_to_equipment(db, org_id)
+
+    db.close()
+
+def check_dirs(dir_list):
+    global base_dir
+    dirs = []
+    for dir in dir_list:
+        path = os.path.join(base_dir, dir)
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        dirs.append(path)
+    return dirs
+
+def get_unblocked_network_allocations( id, db):
+    query = 'select * from network_allocations where blocks_created = 0 and org_id = {0};'.format(id)
+    df = db.getQueryData(query)
+    if df is None:
+        logging.info("no network allocation available, for {0}, exiting ".format(id) )
+        print("No network allocation available, for {0}, exiting ".format(id))
+        exit(0)
+    return df
+
+def generate_address_blocks(db, org_id, allocations, router_net_size, ptp_size):
+    device_offset = router_net_size
     ptp_offset = (ptp_size + device_offset)
 
     ip_types = db.getIPTypes()
-    for i, row in df.iterrows():
-        allocation_id = row['id']
+    for i, allocation in allocations.iterrows():
+        allocation_id = allocation['id']
 
-        addresses = generate_ip(row)
+        addresses = generate_ip(allocation)
         records = []
 
         ptp_index = len(addresses) - ptp_offset -1
@@ -93,7 +126,7 @@ def main(args):
         update_device_addresses(db)
         update_pool_addresses(db)
 
-    # create address pools (blocks)
+def create_pool_blocks(db, org_id, organization_params):
     # get the address to pool
     ip_addresses = db.getPoolAddresses( org_id)
     address_blocks = generate_pool_blocks(ip_addresses, org_id, organization_params['block_size'])
@@ -103,8 +136,9 @@ def main(args):
     # reserve the address block ip addresses, and update linkage
     blocks = db.getNewAddressBlocks(org_id)
     update_block_ip(db, blocks)
+    return len(blocks)
 
-    # add ptp_blocks
+def create_ptp_blocks(db, org_id):
     # Point to Point (ptp) connections require two ip addresses one on each end of the connection.
     # we want addresses blocks to be IP addresses paired by unit distance (e.g. 0-1, 2-3, ...)
     # we have already entered and marked the ip addresses, and marked them for ptp use, we simply need to pair them
@@ -118,23 +152,47 @@ def main(args):
 
     ptp_blocks = db.getNewPTPBlocks(org_id)
     update_ptp_ips(db,ptp_blocks)
+    return(len(ptp_blocks))
 
-    db.close()
+def check_for_address_blocks(device_id):
+    result = False
+    query = "SELECT count(*) FROM address_blocks WHERE reserved = ?;"
+    cursor = db.conn.cursor()
+    cursor.execute(query, (device_id,))
+    row = cursor.fetchone()
+    if row[0] >= 1:
+        result = True
+    cursor.close()
+    return result
 
-def check_dirs(dir_list):
-    global base_dir
-    dirs = []
-    for dir in dir_list:
-        path = os.path.join(base_dir, dir)
-        if not os.path.isdir(path):
-            os.makedirs(path)
-        dirs.append(path)
-    return dirs
+def reserve_and_assign_blocks_to_equipment(db, org_id):
+    # address blocks are reserved for switches and sector devices
+    sites = db.getListOfAllSiteIds(1)
 
-def get_unblocked_network_allocations( id, db):
-    query = 'select * from network_allocations where blocks_created = 0 and org_id = {}'
-    df = pd.read_sql(query.format(id), db.conn)
-    return df
+    for site in sites:
+        print(site)
+        num_switches, num_sectors, num_ptp = db.getSitesEquipmentCount(site)[0]
+        devices = db.getListOfSiteEquipmentIds(site)
+        # assign switch first
+        while num_switches > 0:
+            for device in devices:
+                # switches get a single block per switch
+                if device[0] == 1 and not check_for_address_blocks(device[1]):
+                    block = db.getFirstAvailableAddressBlock(org_id)
+                    db.reserveAddressBlock(device[1], block['id'])
+                    logging.debug("added one block to device {0}, block id = {1}".format(device[3], block['id']))
+                    num_switches -= 1
+        # now assign sectors, do not assign ptp device
+        while num_sectors > 0:
+            for device in devices:
+                # switches get a single block per switch
+                if device[0] == 2 and not check_for_address_blocks(device[1]):
+                    block1 = db.getFirstAvailableAddressBlock(org_id)
+                    db.reserveAddressBlock(device[1], block1['id'])
+                    block2 = db.getFirstAvailableAddressBlock(org_id)
+                    db.reserveAddressBlock(device[1], block2['id'])
+                    num_sectors -= 1
+                    logging.debug("added two block to device {0}, block ids = {1}, {2}".format(device[3], block1['id'], block2['id']))
 
 def generate_ip(row):
     ip_start = int(ipaddress.ip_address(row['starting_address']))
@@ -210,7 +268,7 @@ def get_pool(pool_addresses, start_index, block_size):
 
 
 def get_address_blocks(db, org_id):
-    query = 'SELECT id, org_id, network, broadcast FROM address_blocks WHERE linked = 0 AND assigned IS NULL AND org_id = {};'
+    query = 'SELECT id, org_id, network, broadcast FROM address_blocks WHERE reserved = 0 AND assigned IS NULL AND org_id = {};'
     df = db.getQueryData(query.format(org_id))
     return df
 
@@ -307,7 +365,7 @@ if __name__ == '__main__':
 
     if TEST == True:
         args= parser.parse_args(['-c','example_club', '--db', '../data/planning_example.sqlite3'])
-        #args = parser.parse_args(['-c', 'spokane','--db', '../data/planning_spokane.sqlite3'])
+        #args = parser.parse_args(['-c', 'spokane','--db', '../data/spokane_example.sqlite3'])
     else:
         args = parser.parse_args()
 

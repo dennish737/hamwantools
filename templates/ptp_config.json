@@ -18,9 +18,7 @@
 							"actions": [{
 								"action": "add",
 								"params": {
-									"name": "localloopback0",
-									"disable": "no",
-									"protocol-mode": "rstp"
+									"name": "localloopback0"
 								}
 							}]
 						}
@@ -34,7 +32,8 @@
 								"action": "add",
 								"params": {
 									"address": "ether1_ip",
-									"interface": "ether1"
+									"interface": "ether1",
+									"network": "tag tbd"
 								}
 							}]
 						}
@@ -49,9 +48,10 @@
 								"params": {
 									"band": "5ghz-onlyac",
 									"disabled": "no",
-									"country": "no_country_set",
+									"country": "united states",
 									"frequency-mode": "superchannel",
 									"frequency": "5700 ",
+									"mode": "ap-bridge",
 									"nv2-cell-radius": "100 ",
 									"nv2-preshared-key": "backbonekey",
 									"radio-name": "routername",
@@ -68,7 +68,8 @@
 								"action": "add",
 								"params": {
 									"address": "wlan1_ip",
-									"interface": "wlan1"
+									"interface": "wlan1",
+									"network": "tag tbd"
 								}
 							}]
 						},

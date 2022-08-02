@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/product.schema.json",
+  "title": "HamWAN Config",
+  "description": "HamWan Configuration commands for device type",
+  "type": "object",
+  "__comment1__": "Configuration HamWAN devices",
+  "__comment2__": "Assumptions",
+  "__comment3__": "  a) user has used winbox.exe to initialize device, defining system name and ether1 interface",
+  "__comment4__": "  b) The system name is used to look up device ip, and device parameters (e.g. TBD)",
+  "config": {
+    "switch": {
+      "interfaces": {
+        "bridge": {
+					"activities": {
+						"create": {
+							"command": "/interface bridge",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"name": "bridge1",
+									"disable": "no",
+									"protocol-mode": "rstp"
+								}
+							}]
+						},
+                      "settings": {
+                        "command": "/interface bridge settings",
+                        "operations": [{
+                          "operation": "set",
+                          "params": {
+                            "use-ip-firewall": "yes",
+                            "use-ip-firewall-for-pppoe": "yes",
+                            "use-ip-firewall-for-vlan": "yes"
+                          }
+                        }]
+                      },
+                      "ports": {
+                        "command": "/interface bridge port",
+                        "operations": [
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether1"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether2"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether3"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether4"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether5"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether6"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether7"
+                            }
+                          },
+                          {
+                            "operation": "add",
+                            "params": {
+                              "bridge": "bridge1",
+                              "interface": "ether8"
+                            }
+                          }
+                        ]
+                      },
+                      "ip_address": {
+							"command": "/ip address",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"address": "ether1_ip",
+									"interface": "ether1"
+								}
+							}]
+						}
+                      }
+
+					}
+      },
+      "routing": {
+        "filters": {
+          "activities": {
+            "command": "/routing filters",
+            "operations": [
+              {
+                "activity": "add",
+                "params": {
+                  "action": "accept",
+                  "chain": "AMPR-default",
+                  "prefix": "44.0.0.0/8",
+                  "prefix-length": "8-32"
+                }
+              },
+              {
+                "activity": "add",
+                "params": {
+                  "action": "accept",
+                  "chain": "AMPR-default",
+                  "prefix": "0.0.0.0/0"
+                }
+              },
+              {
+                "activity": "add",
+                "params": {
+                  "action": "reject",
+                  "chain": "AMPR-default"
+                }
+              }
+            ]
+          }
+        },
+        "ospf": {
+          "activities": {
+            "ospf_if": {
+              "command": "routing ospf interface",
+              "opperations": [
+                {
+                  "operation": "add",
+                  "parms": {
+                    "authentication": "md5",
+                    "authenticaton-key": "ospfkey",
+                    "interface": "ospf_if",
+                    "network-type": "broadcast"
+                  }
+                }
+              ]
+            },
+            "ospf_network": {
+              "command": "/routing ospf network",
+              "operations": [
+                {
+                  "operation": "add",
+                  "params": {
+                    "area": "backbone",
+                    "network": "ospf_net"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "vrrp": {
+          "activities": {
+            "create": {
+              "command": "/interface vrrp",
+              "activities": [
+                {
+                  "activity": "add",
+                  "params": {
+                    "authentication": "ah",
+                    "interface": "ether1",
+                    "name": "vrrp1",
+                    "password": "vrrpkey",
+                    "version": "2"
+                  }
+                }
+              ]
+            },
+            "ip_address": {
+              "command": "/ip address",
+              "activities": [
+                {
+                  "activity": "add",
+                  "params": {
+                    "address": "vrrp_ip",
+                    "interface": "vrrp1",
+                    "network": "vrrp_net"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "snmp": {
+				"activities": {
+					"community": {
+						"command": "/snmp community",
+						"operations": [{
+							"operation": "set [ find default=yes ]",
+							"params": {
+								"address": "network_allocation",
+								"name": "WAConnect"
+							}
+						}]
+					},
+					"contact": {
+						"command": "/snmp",
+						"operations": [{
+							"operation": "set ",
+							"params": {
+								"contact": "\"#HamWAN-Support on irc.freenode.org\"",
+								"enable": "yes",
+                                "trap-community": "WAconnect"
+							}
+						}
+                        ]
+					}
+				}
+			},
+      "system": {
+				"activities": {
+					"identity": {
+						"command": "/system identity",
+						"operations": [
+							{
+								"operation": "set",
+								"params": {
+									"name": "sys_name"
+								}
+							}
+						]
+					},
+					"clock": {
+						"command": "/system clock",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"time-zone-autodetect": "no",
+								"time-zone-name": "timezone"
+							}
+						}]
+					},
+					"led1": {
+						"command": "/system leds",
+						"operations": [{
+							"operation": "set 1",
+							"params": {
+								"interface": "wlan1"
+							}
+						}]
+					},
+					"tools": {
+						"command": "/tool bandwidth-server",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"authenticate": "no"
+							}
+						}]
+					}
+				}
+			}
+    }
+  }
+}
