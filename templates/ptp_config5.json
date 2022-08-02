@@ -1,0 +1,219 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://example.com/product.schema.json",
+	"title": "HamWAN Config",
+	"description": "HamWan Configuration commands for device type",
+	"type": "object",
+	"__comment1__": "Configuration HamWAN devices",
+	"__comment2__": "Assumptions",
+	"__comment3__": "  a) user has used winbox.exe to initialize device, defining system name and ether1 interface",
+	"__comment4__": "  b) The system name is used to look up device ip, and device parameters (e.g. TBD)",
+	"config": {
+		"PTP": {
+			"interfaces": {
+				"bridge": {
+					"activities": {
+						"create": {
+							"command": "/interface bridge",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"name": "localloopback0",
+									"disable": "no",
+									"protocol-mode": "rstp"
+								}
+							}]
+						}
+					}
+				},
+				"ether1": {
+					"activities": {
+						"ip_address": {
+							"command": "/ip address",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"address": "ether1_ip",
+									"interface": "ether1"
+								}
+							}]
+						}
+					}
+				},
+				"wlan1": {
+					"activities": {
+						"create": {
+							"command": "/interface wireless",
+							"operations": [{
+								"operation": "set [ find default-name=wlan1 ]",
+								"params": {
+									"band": "5ghz-onlyac",
+									"disabled": "no",
+									"country": "no_country_set",
+									"frequency-mode": "superchannel",
+									"frequency": "5700 ",
+									"nv2-cell-radius": "100 ",
+									"nv2-preshared-key": "backbonekey",
+									"radio-name": "routername",
+									"scan-list": "5700",
+									"ssid": "backbonename",
+									"tdma-period-size": "4",
+									"wireless-protocol": "nv2"
+								}
+							}]
+						},
+						"ip_address": {
+							"command": "/ip address",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"address": "wlan1_ip",
+									"interface": "wlan1"
+								}
+							}]
+						},
+						"security_profile": {
+							"command": "/interface wireless security-profile",
+							"operations": [{
+								"operation": "set [ find default=yes ]",
+								"params": {
+									"supplicant-identity": "Mikrotik"
+								}
+							}]
+						}
+					}
+				},
+				"vrrp": {
+					"activities": {
+						"create": {
+							"command": "/interface vrrp",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"authentication": "ah",
+									"interface": "ether1",
+									"name": "vrrp1",
+									"password": "vrrpkey",
+									"version": "2"
+								}
+							}]
+						},
+						"ip_address": {
+							"command": "/ip address",
+							"operations": [{
+								"operation": "add",
+								"params": {
+									"address": "defaultgateway",
+									"interface": "vrrp1"
+								}
+							}]
+						}
+					}
+				}
+			},
+			"global_ip": {
+				"activities": {
+					"settings": {
+						"command": "/ip settings",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"send-redirects": "no"
+							}
+						}]
+					},
+					"firewall": {
+						"command": "/ip firewall mangle",
+						"operations": [{
+							"operation": "add",
+							"params": {
+								"operation": "change-mss",
+								"chain": "output",
+								"new-mss": "1378",
+								"protocol": "tcp",
+								"tcp-flags": "syn",
+								"tcp-mss": "!0-1378"
+							}
+						}]
+					},
+					"services": {
+						"command": "/ip service",
+						"operations": [{
+							"operation": "set ssh",
+							"params": {
+								"port": "22"
+							}
+						}]
+					}
+				}
+			},
+			"snmp": {
+				"activities": {
+					"community": {
+						"command": "/snmp community",
+						"operations": [{
+							"operation": "set [ find default=yes ]",
+							"params": {
+								"address": "network_allocation",
+								"name": "hamwan"
+							}
+						}]
+					},
+					"contact": {
+						"command": "/snmp",
+						"operations": [{
+							"operation": "set ",
+							"params": {
+								"contact": "\"#HamWAN-Support on irc.freenode.org\"",
+								"enable": "yes"
+							}
+						}]
+					}
+				}
+			},
+			"system": {
+				"activities": {
+					"identity": {
+						"command": "/system identity",
+						"operations": [
+							{
+								"operation": "set",
+								"params": {
+									"name": "sys_name"
+								}
+							}
+						]
+					},
+					"clock": {
+						"command": "/system clock",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"time-zone-autodetect": "no",
+								"time-zone-name": "timezone"
+							}
+						}]
+					},
+					"led1": {
+						"command": "/system leds",
+						"operations": [{
+							"operation": "set 1",
+							"params": {
+								"interface": "wlan1"
+							}
+						}]
+					},
+					"tools": {
+						"command": "/tool bandwidth-server",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"authenticate": "no"
+							}
+						}]
+					}
+				}
+			}
+		}
+	}
+}
