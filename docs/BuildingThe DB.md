@@ -95,7 +95,7 @@ This table is provided as a support tool for looking up CIDR value
  4) select the file ./examples/cidr_mask.csv
  5) click Ok
 
-#### Add type information
+#### Add type information for Sites, Equipment, Interfaces, ...
  1) open DB Browser
  2) Open your database 
  3) Select the Execute SQL tab and select the open file
@@ -141,6 +141,20 @@ wide. If a site id is provided, then the site keys will override the default key
  2) Edit the key_val values for your organization
  3) Click the run button
 
+### Add Global Parameters
+General parameters can be applied to the network or site level of the network. These parameters
+include but are not limited to:
+ - logging
+ - dns
+ - ntp
+ - time zone
+
+If parameters re entered with a site_id, they are site specific parameters. While if the site_id
+is left empty (NULL) they are network parameters. If there are no global site parameters, the network
+parameters will be used.
+
+TBD instructions for loading example network global parameters
+
 
 ### Add Equipment to sites
 
@@ -159,6 +173,20 @@ Example:python ./tools/add_interfaces.py -c example_club --db ./data/planning_ex
 ### Construction your allocation and ptp blocks
 
 Example:python ./tools/add_ipaddresses.py -c example_club --db ./data/planning_example.sqlite3
+
+### Add Equipment to the Paths
+
+Example:python ./tools/add_equipment2path.py -c spokane --db ./data/spokane_example.sqlite3
+
+### Add Interfaces
+
+Example:python ./tools/assign_ip2interfaces.py -c spokane --db ./data/spokane_example.sqlite3
+
+### Assign IP Address to Interfaces
+
+Example: python ./tools/assign_ip2interfaces.py -c spokane --db ./data/spokane_example.sqlite3 
+
+
 
 
 

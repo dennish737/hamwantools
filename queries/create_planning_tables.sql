@@ -57,6 +57,33 @@ CREATE TABLE IF NOT EXISTS "services_pwd" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
+--DROP TABLE IF EXISTS "ptp_security";
+CREATE TABLE IF NOT EXISTS "ptp_security" (
+    "id" INTEGER NOT NULL,
+    "org_id"    INTEGER NOT NULL,
+    "path_id"   INTEGER,
+    "SSID"      TEXT,
+    "passwd"    TEXT,
+    FOREIGN KEY(org_id) REFERENCES organizations("org_id"),
+    FOREIGN KEY(path_id) REFERENCES paths("id")
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+-- Client security provides the SSID and password for wireless connection
+-- typically, there is one common set for the whole network, but we could apply then at the
+-- site level
+--DROP TABLE IF EXISTS "client_security";
+CREATE TABLE IF NOT EXISTS "client_security" (
+    "id" INTEGER NOT NULL,
+    "org_id"    INTEGER NOT NULL,
+    "site_id"   INTEGER,
+    "SSID"      TEXT,
+    "passwd"    TEXT,
+    FOREIGN KEY(org_id) REFERENCES organizations("org_id"),
+    FOREIGN KEY(site_id) REFERENCES sites("id")
+    PRIMARY KEY("id" AUTOINCREMENT)
+);
+
 --DROP TABLE IF EXISTS "organizations";
 CREATE TABLE IF NOT EXISTS "organizations" (
 	"org_id"	INTEGER NOT NULL,

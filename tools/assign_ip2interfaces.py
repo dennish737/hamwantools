@@ -355,8 +355,8 @@ def get_log_level(level):
     return log_level
 
 def check_ptp_devices(db, ptp_path, ptp_block):
-    eqp_a_list = db.getEquipmentInfo(ptp_path['device_a'], 'wlan')
-    eqp_b_list = db.getEquipmentInfo(ptp_path['device_b'], 'wlan')
+    eqp_a_list = db._getEquipmentInfo(ptp_path['device_a'])
+    eqp_b_list = db._getEquipmentInfo(ptp_path['device_b'])
     device_a = None
     device_b = None
     # check to see if we have more than one wlan interface

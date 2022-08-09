@@ -33,6 +33,24 @@ online viewing videos and reading documents, will be needed.
 
 Also, if there is a local Junior College, Technical School or University, nearby, you may want to
 look into their IT programs, and available classes.
+### Network Services
+To run your network successfully, you will need some basic services, so we will need one or more 
+servers to provide these essential services. Here is a list of minimal services we will need:
+ - DHCP
+ - DNS
+ - Management and Monitoring (SNMP)
+ - Logging
+ - Time reference source
+ - Routing
+ - Account Management*
+
+The Mikrotik devices will provide us with DHCP and Routing, while we will need to provide a service 
+for DNS, Managing and Monitoring, Logging, and Time Reference. 
+
+Account management will depend on what you use accounts for. If your goal simpley for management access
+we can use the Mikrotik Account tools, If we want more centralized account management, we can use
+a strategy like LDAP.
+
 ### Financing your network
 In most ham based projects, capital funding is handled by the team putting it together, and operational
 cost is ignored. However, for this project you will need to think of both capital funding (money to buy all the equipment
@@ -236,6 +254,9 @@ These sites are call Gateway Sites. They are exactly the same as every other sit
 piece of equipment to connect the site to and ISP. Usually this equipment is supplied by the ISP, 
 and we use this device to connect to the site router, which requires slightly different configuration
 of the site switch (router).
+
+### Services
+
 
 ### Final Check
 Once we have all this information, it is time to document and check. Typically, this is done

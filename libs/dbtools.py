@@ -55,24 +55,26 @@ class DbSqlite():
             self.close()
 
         try:
-            conn = sqlite3.connect(self.db_file)
+            connection = sqlite3.connect(self.db_file)
+            self.conn = connection
         except sqlite3.Error as e:
             logging.error(e)
-        self.conn = conn
 
-    def connect(self, db_file):
-        if db_file is None:
-            raise ValueException('requires a valid db_file name. None provided')
+
+    def connect(self, file):
+        if file is None:
+            raise ValueError('requires a valid db_file name. None provided')
 
         if self.conn is not None:
             self.close()
 
         try:
-            conn = sqlite3.connect(db_file)
+            conn = sqlite3.connect(file)
+            self.conn = conn
+            self.db_file = file
         except sqlite3.Error as e:
             logging.error(e)
-        self.conn = conn
-        self.db_file = db_file
+
 
     def _clearTable(self, table_name):
         query1 = "DELETE FROM ?;"
@@ -85,7 +87,7 @@ class DbSqlite():
 
     def getTableColumnNames(self, table):
         query = 'PRAGMA table_info({})'.format(table)
-        cursor = self.conn.execute('PRAGMA table_info(sites)')
+        cursor = self.conn.execute(query)
         desc = cursor.fetchall()
         # getting names using list comprehension
         names = [fields[1] for fields in desc]
@@ -118,6 +120,20 @@ class DbSqlite():
         # returns a list of dictionaries, each item in list(each dictionary)
         # represents a row of the table
         cursor.close()
+        return result
+
+    def getSingleRowQueryDictionary(self, query, *args):
+        result = None
+        try:
+            self.conn.row_factory = sqlite3.Row
+            cursor = self.conn.cursor()
+            cursor.execute(query, args)
+            row = cursor.fetchone()
+            if row:
+                result = dict(row)
+            cursor.close()
+        except sqlite3.Error as error:
+            logging.error(error)
         return result
 
     def getAvailablePTPIps(self, org_id):
@@ -224,6 +240,7 @@ class DbSqlite():
     def getEquipmentId(self, org_id, name):
         query = 'SELECT id, name FROM site_equipment WHERE org_id = ? AND lower(name) = ?;'
         id = None
+        eqp_name = None
         try:
             cursor = self.conn.cursor()
             cursor.execute(query, (org_id, name.lower()))
@@ -231,24 +248,85 @@ class DbSqlite():
             id = row[0]
             eqp_name = row[1]
         except sqlite3.Error as error:
-            logging.error("failed ot read equipment name with id = {}".format(id))
+            logging.error("failed to read equipment name with id = {}".format(id))
         return id, eqp_name
 
-    def getEquipmentInfo(self, equip_id, if_type=None):
-        query = """SELECT se.id as dev_id, se.name as dev_name, if.id as if_id, if.if_type as if_type, if.if_name as if_name, ip.ip_address as ip_address 
+    def _getEquipmentInfo(self, equip_id):
+        query = """SELECT se.name as device_name, se.group_id, if_type, if_name, if.addr_id, if.dhcp_id 
             FROM site_equipment se
-            LEFT OUTER JOIN interfaces if
+            INNER JOIN interfaces if
             ON if.equip_id = se.id
-            LEFT OUTER JOIN ip_addresses ip
-            ON ip.id = if.addr_id
-            WHERE se.id = {0} """.format(equip_id)
+            WHERE se.id = ?;"""
 
-        if if_type is not None:
-            query = query + " AND lower(if.if_type) = '{0}';".format(if_type)
+        equip_dict = self.getQueryDictionary(query, equip_id)
+        return equip_dict
+
+    def _getInterfaceIp(self, ip_id):
+        query = """SELECT ip_type, ip_address, reserved FROM ip_addresses 
+                WHERE id = ?;"""
+        ip_address = None
+        ip_type = None
+        cidr = '/32'
+        result = self.getSingleRowQueryDictionary(query,ip_id)
+        if result is None:
+            logging.error("failed to read ip_address of id = {}".format(ip_id))
         else:
-            query += ';'
-        d = self.getQueryDictionary(query)
-        return d
+            ip_address = result['ip_address']
+            if result['ip_type'] == 1:
+                cidr = '/27'
+            elif result['ip_type'] == 2:
+                cidr = '/31'
+            else:
+                cidr = '/32'
+            if len(ip_address.split('/')) == 1:
+                ip_address += cidr
+            else:
+                ip_address = ip_address.split('/')[0] + cidr
+        return ip_address
+
+    def _getInterfaceNetwork(self, ip_id):
+        # the location of hte network address for an interface is dependent on the
+        # type of interface
+        query = """SELECT ip_type, reserved FROM ip_addresses 
+                WHERE id = ?;"""
+        ip_type = None
+        ip_reserved = None
+        network_ip = None
+        dict1 = self.getSingleRowQueryDictionary(query, ip_id)
+        if dict1:
+            ip_type = dict1['ip_type']
+            ip_reserved = dict1['reserved']
+            if ip_type == 1:    # address block
+                query = "SELECT ip_address as network_ip FROM ip_addresses WHERE id = (SELECT x.network FROM address_blocks x WHERE x.id = ?);"
+                dict2 = self.getSingleRowQueryDictionary(query, ip_reserved)
+                if dict2:
+                    network_ip = dict2['network_ip']
+            elif ip_type == 2:  # ptp type
+                query = """SELECT ptp.ip_a, ptp.ip_b, a.ip_address as ip_addr_a, b.ip_address as ip_addr_b FROM ptp_blocks ptp
+                            INNER JOIN ip_addresses a
+                            ON a.id = ptp.ip_a
+                            INNER JOIN ip_addresses b
+                            ON b.id = ptp.ip_b                            
+                            WHERE ptp.id = ?;"""
+                dict2 = self.getSingleRowQueryDictionary(query, ip_reserved)
+                if dict2:
+                    if ip_id == dict2['ip_a']:
+                        network_ip = dict2['ip_addr_b']
+                    else:
+                        network_ip = dict2['ip_addr_a']
+            elif ip_type == 3:  # router ip
+                query = " SELECT ip_address FROM ip_addresses WHERE ip_type = 3 ORDER BY id LIMIT 1;"
+                dict2 = self.getSingleRowQueryDictionary(query)
+                if dict2:
+                    network_ip = dict2['ip_address']
+            else:
+                logging.error("invalid ip_type {0} for ip_address {1}".format(ip_type, ip_id))
+                raise ValueError("invalid ip_type {0} for ip_address {1}".format(ip_type, ip_id))
+        else:
+            logging.error("failed to read ip_address of network = {}".format(ip_reserved))
+        if network_ip is not None:
+            network_ip = network_ip.split('/')[0]
+        return network_ip
 
     def getEquipmentName(self, id):
         query = 'SELECT name FROM site_equipment WHERE id = ?;'
@@ -410,14 +488,14 @@ class DbSqlite():
         df_new = pd.DataFrame(new_data)
         return df_new
 
-    def gerFirstAvailableRouterIfAddress(self, org_id):
+    def getFirstAvailableRouterIfAddress(self, org_id):
         query = """SELECT id, ip_address FROM ip_addresses WHERE org_id = ? AND assigned = 0 AND reserved = 0 AND
         ip_type = (SELECT x.id FROM ip_types x WHERE lower(type_name) = 'device' )
 		ORDER BY id LIMIT 1;"""
         cursor = self.conn.cursor()
         cursor.execute(query, (org_id,))
         result = cursor.fetchone()
-        id = None
+        ip_id = None
         ip_addr = None
         if result:
             ip_id = result[0]
@@ -540,19 +618,7 @@ class DbSqlite():
         cursor.execute(query2, (if_id, ip_addr_id))
         self.conn.commit()
         cursor.close()
-    """
-    def assignAddressBlock(self, if_id, ip_id, block_id, ):
-        logging.debug("assignAddressBlock, if_id = {0}, ip_id={1}, block_id = {2}".format(if_id, ip_id,block_id))
-        query1 = "UPDATE address_blocks SET assigned= ? WHERE id = ?;"
-        query2 = "UPDATE ip_addresses SET assigned = ? WHERE id = ?  ;"
-        query3 = "UPDATE interfaces SET new = 0 , addr_id = ? WHERE id = ?"
-        cursor = self.conn.cursor()
-        cursor.execute(query1, (if_id, block_id))
-        cursor.execute(query2, (if_id, ip_id))
-        cursor.execute(query3, (ip_id, if_id))
-        self.conn.commit()
-        cursor.close()
-    """
+
     def assignAddressBlock(self, equip_id, block_id):
         logging.debug("assigningAddressBlock, equip_id = {0}, block_id = {1}".format(equip_id, block_id))
         query = "UPDATE address_blocks SET assigned = ? WHERE id = ?;"
@@ -591,7 +657,6 @@ class DbSqlite():
         cursor.execute(query, (ip_addr_id, if_id))
         self.conn.commit()
         cursor.close()
-
 
     def getPTPBlock(self, block_id):
         query = "SELECT id, ip_a, ip_b FROM ptp_blocks WHERE id = {0} LIMIT 1;".format(block_id)
@@ -685,7 +750,7 @@ class DbSqlite():
 
         # we expect only one row to be returned
         if len(rows) > 1:
-            raise ValueError(f'more than one row returned for site={name}')
+            raise ValueError(f'more than one row returned for path={path_name}')
         path_id = rows[0][0]
         cursor.close()
         return path_id
@@ -797,6 +862,71 @@ class DbSqlite():
             logging.error("assignedEquipmentToPTPPath failed path_id={0}, device_a_id={1}, device_b_id={2}",
                   path_id, device_a_id, device_b_id)
 
+    def _getOrgParameters(self, org_id):
+        query = "SELECT call_sign, club_contact FROM organizations WHERE org_id = ?;"
+        results = self.getQueryDictionary(query, org_id)
+        return results
+
+    def _getOrgGlobalParameters(self, org_id):
+        query = "SELECT timezone, log1, log2, dns1, dns2, ntp1, ntp2 FROM global_parameters WHERE org_id = ? and site_id is NULL;"
+        results = self.getQueryDictionary(query, org_id)
+        return results
+
+    def _getSiteGlobalParameters(self, org_id, site_id):
+        query = "SELECT timezone, log1, log2, dns1, dns2, ntp1, ntp2 FROM global_parameters WHERE org_id = ? and site_id = ?;"
+        results = self.getQueryDictionary(query, org_id, site_id)
+        return results
+
+    def getGlobalParameters(self, org_id, site_id):
+        org_params = self._getOrgParameters(org_id)
+        global_org_params = self._getOrgGlobalParameters(org_id)
+        global_site_params = self._getSiteGlobalParameters(org_id, site_id)
+
+        results = None
+        if len(org_params) > 0:
+            print(org_params)
+            results = org_params[0]
+        else:
+            results = {'call_sign': None, 'club_contact': None}
+
+        # merge in site global params
+        if len(global_site_params) > 0:
+            for k,v in global_site_params[0].items():
+                results[k] = v
+
+        if len(global_org_params) > 0:
+            # check for missing values
+            for k, v in global_org_params[0].items():
+                if k in results.keys():
+                    v1 = results[k]
+                    results[k] = v1 if v1 is not None else v
+                else:
+                    results[k] = v
+
+        # add missing items
+        key_list = ["timezone", "log1", "log2", "dns1", "dns2", "ntp1", "ntp2"]
+        for key in key_list:
+            if key not in results.keys():
+                results[key] = None
+
+        # add ptp security parameters
+        return results
+
+
+    def _getOrgPTPSecurity(self, org_id):
+        query = "SELECT ssid as ptp_ssid, passwd as password FROM ptp_security WHERE org_id = ? AND path_id is NULL ORDER BY id;"
+        results = self.getQueryDictionary(query, org_id, site_id)
+        print("_getOrgPTPSecurity: results = ", results)
+        return results
+
+    def _getSitePTPSecurity(self, org_id, path_id):
+        query = "SELECT ssid as ptp_ssid, passwd as password FROM ptp_security WHERE org_id = ? AND path_id = ? ORDER BY id;"
+        results = self.getQueryDictionary(query, org_id, path_id)
+        print("_getSitePTPSecurity: results = ", results)
+        return results
+
+
+
     def getRegionInfo(self, region):
         columns = ['network_allocation',
                    'wirelessname', 'wirelesskey',
@@ -829,38 +959,103 @@ class DbSqlite():
 
         return region_params
 
-    def getPTPParams(self, sys_name):
-        columns = ['sys_name', '_from', '_to', 'routername', 'wlan1_ip',
-                   'netaddress', 'ether1_ip', 'remote_routername', 'remoteip']
+    def _getPathName(self, ip_id, device_id):
+        query = """SELECT ip_type, reserved FROM ip_addresses 
+                WHERE id = ?;"""
+        ip_type = None
+        sys_name = None
+        from_name = None
+        to_name = None
+        dict1 = self.getSingleRowQueryDictionary(query, ip_id)
+        if dict1:
+            ip_type = dict1['ip_type']
+            ip_reserved = dict1['reserved']
+            if ip_type == 2:
+                query1 = """SELECT a.name as a_name, b.name as b_name, p.device_a, p.device_b
+                            FROM paths p
+                            INNER JOIN sites a
+                            ON a.id = p.site_a
+                            INNER JOIN sites b
+                            ON b.id = p.site_b
+                            WHERE p.id = (SELECT assigned from ptp_blocks where id = ?)"""
+                paths = self.getSingleRowQueryDictionary(query1, ip_reserved)
+                if paths['device_a'] == device_id:
+                    sys_name = '.'.join([paths['b_name'] , paths['a_name']])
+                    from_name = paths['a_name']
+                    to_name = paths['b_name']
+                else:
+                    sys_name = '.'.join([paths['a_name'], paths['b_name']])
+                    from_name = paths['b_name']
+                    to_name = paths['a_name']
+        return from_name, to_name, sys_name
 
-        query= """select a.sys_name, a._from, a._to, a.routername, a.wanip, a.netaddress, c.etherip,b.routername, 
-                b.wanip 
-                from ptprouters a
-                inner join ptprouters b
-                on b._to = a._from and b._from = a._to
-                inner join routers c
-                on c.sys_name = a.sys_name
-                where a.sys_name = ?;
-                """
-
-        cursor = self.conn.cursor()
-        cursor.execute(query, (sys_name,))
-
-        rows = cursor.fetchall()
-
-        # we expect only one row to be returned
-        if len(rows) > 1:
-            raise ValueError(f'more thant one row returned for ptp router={sys_name}')
-
+    def getPTPParams(self, info, device_id, club_callsign):
         ptp_params = {}
-
-        row = rows[0]
-
-        for i in range(len(row)):
-            # build a dictionary of parameters
-            ptp_params[columns[i]] = row[i]
-
+        #
+        count = 0
+        for iface in info:
+            if count == 0:
+                count = 1
+                ptp_params['sys_name'] = iface['device_name']
+            if iface['addr_id'] is not None:
+                ifname = iface['if_name'] + '_ip'
+                ptp_params[ifname] = self._getInterfaceIp(iface['addr_id'])
+                if iface['if_type'] == 'wlan':
+                    ptp_params["remoteip"] = self._getInterfaceNetwork(iface['addr_id'])
+                    ptp_params['_from'], ptp_params['_to'], ptp_params['radioname'] = self._getPathName(iface['addr_id'], device_id)
+                    ptp_params['remote_routername'] = ptp_params['_from'] + '.' + ptp_params['_to']
+                    ptp_params['sys_name'] = ptp_params['radioname']
+                    ptp_params['radioname'] = club_callsign + ptp_params['radioname']
+                else:
+                    ptp_params['netaddress'] = self._getInterfaceNetwork(iface['addr_id'])
         return ptp_params
+
+    def getRouterParameters(self,info, device_id, club_callsign):
+
+        router_params = {}
+        dhcpblocks = []
+        count = 0
+        for iface in info:
+            if count == 0:
+                count = 1
+                router_params['sys_name'] = iface['device_name']
+                router_params['routername'] = iface['device_name']
+            if iface['addr_id'] is not None and (iface['if_type'] == 'ether' or iface['if_type'] == 'wlan'):
+                ifname = iface['if_name'] + '_ip'
+                router_params[ifname] = self._getInterfaceIp(iface['addr_id'])
+                if iface['if_type'] == 'wlan':
+                    router_params['radioname'] = club_callsign + iface['device_name']
+                    router_params['wlanaddress'] = self._getInterfaceNetwork(iface['addr_id'])
+                else:
+                    router_params['netaddress'] = self._getInterfaceNetwork(iface['addr_id'])
+            elif iface['dhcp_id'] is not None and iface['if_type'] == 'dhcp':
+                query = """SELECT pool.pool_name, ipn.ip_address as network, ipl.ip_address as lower_addr, 
+                            ipu.ip_address as upper_addr, 
+                            (SELECT x.ip_address FROM ip_addresses x WHERE x.id = pool.gateway_addr) as gateway_addr, 
+                            (SELECT y.ip_address from ip_addresses y WHERE y.id = pool.dns_addr) as dns_addr
+                            FROM dhcp_pools pool
+                            INNER JOIN ip_addresses ipn
+                            ON ipn.id = pool.network
+                            INNER JOIN ip_addresses ipl
+                            ON ipl.id = pool.lower_addr
+                            INNER JOIN ip_addresses ipu
+                            ON ipu.id = pool.upper_addr
+                            WHERE pool.id = ?"""
+                dhcp = self.getSingleRowQueryDictionary(query, iface['dhcp_id'])
+                dhcpblocks.append(dhcp)
+        if len(dhcpblocks) > 0:
+            router_params['dhcp'] = dhcpblocks
+        return router_params
+
+    def getDeviceParameters(self, device_id, club_callsign):
+        info = self._getEquipmentInfo(device_id)
+        if info[0]['group_id'] == 1 or info[0]['group_id'] == 2:
+            return self.getRouterParameters(info, device_id, club_callsign)
+        elif info[0]['group_id'] == 3:
+            return self.getPTPParams(info, device_id, club_callsign)
+
+
+
 
 
 if __name__ == '__main__':

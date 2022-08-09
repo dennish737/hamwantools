@@ -1,0 +1,58 @@
+[admin@fancher.dem] > exp
+# jan/01/1970 17:06:42 by RouterOS 6.47.9
+# software id = BTRD-8E0L
+#
+# model = 921UAGS-5SHPacD
+# serial number = CD370ECC1C85
+/interface bridge
+add name=loopback0
+/interface wireless
+set [ find default-name=wlan1 ] band=5ghz-onlyac country="united states" disabled=no frequency=5700 frequency-mode=superchannel nv2-cell-radius=100 \
+    nv2-preshared-key=SPODEM radio-name=WA7CON/fancher.dem scan-list=5700 ssid=WAConnect tdma-period-size=4 wireless-protocol=nv2
+/interface vrrp
+add authentication=ah interface=ether1 name=vrrp1 password=ABBABBABB version=2
+
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+/routing ospf instance
+set [ find default=yes ] distribute-default=if-installed-as-type-1 in-filter=AMPR-default out-filter=AMPR-default redistribute-bgp=as-type-1 \
+    redistribute-connected=as-type-1 redistribute-other-ospf=as-type-1 router-id=44.12.128.226
+/system logging action
+set 3 remote=44.12.140.4
+/ip neighbor discovery-settings
+set discover-interface-list=!dynamic
+/ip settings
+set send-redirects=no
+/ip address
+add address=44.12.128.226/28 interface=ether1 network=44.12.128.224
+add address=44.12.134.7 interface=wlan1 network=44.12.134.6
+add address=44.12.128.142 interface=vrrp1 network=44.12.128.142
+/ip dns
+set servers=8.8.8.8,8.8.4.4
+/ip firewall mangle
+add action=change-mss chain=output new-mss=1378 protocol=tcp tcp-flags=syn tcp-mss=!0-1378
+/ip service
+set ssh port=222
+/routing filter
+add action=accept chain=AMPR-default prefix=44.0.0.0/8 prefix-length=8-32
+add action=accept chain=AMPR-default prefix=0.0.0.0/0
+add action=reject chain=AMPR-default
+/routing ospf interface
+add authentication=md5 authentication-key=DEMFAN interface=wlan1 network-type=point-to-point
+add authentication=md5 authentication-key=ABBABBABB interface=ether1 network-type=broadcast
+/routing ospf network
+add area=backbone network=44.12.128.224/28
+add area=backbone network=44.12.134.6/32
+/snmp
+set contact="Spokane DEM" enabled=yes
+/system clock
+set time-zone-autodetect=no time-zone-name=America/Los_Angeles
+/system identity
+set name=fancher.dem
+/system logging
+add action=remote topics=!debug,!snmp
+/system ntp client
+set enabled=yes primary-ntp=44.12.140.4 secondary-ntp=44.12.140.5
+/tool bandwidth-server
+set authenticate=no
+[admin@fancher.dem] >
