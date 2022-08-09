@@ -1,0 +1,109 @@
+# model = CRS112-8P-4S
+# serial number = D2600DC43EA9
+/interface bridge
+add name=bridge1
+
+/interface ethernet
+set [ find default-name=ether6 ] comment=fancher.dem
+
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+
+/interface bridge port
+add bridge=bridge1 comment=defconf interface=ether1
+add bridge=bridge1 comment=defconf interface=ether2
+add bridge=bridge1 comment=defconf interface=ether3
+add bridge=bridge1 comment=defconf interface=ether4
+add bridge=bridge1 comment=defconf interface=ether5
+add bridge=bridge1 comment=defconf interface=ether6
+add bridge=bridge1 comment=defconf interface=ether7
+add bridge=bridge1 comment=defconf interface=ether8
+add bridge=bridge1 comment=defconf interface=sfp9
+add bridge=bridge1 comment=defconf interface=sfp10
+add bridge=bridge1 comment=defconf interface=sfp11
+add bridge=bridge1 comment=defconf interface=sfp12
+
+/interface bridge settings
+set use-ip-firewall=yes use-ip-firewall-for-pppoe=yes use-ip-firewall-for-vlan=yes
+
+/interface ovpn-server server
+set cipher=aes256 enabled=yes
+
+[admin@R1.dem] /interface> eth
+[admin@R1.dem] /interface ethernet> exp
+# jan/02/1970 00:13:06 by RouterOS 6.45.9
+# software id = DY8J-B1WX
+#
+# model = CRS112-8P-4S
+# serial number = D2600DC43EA9
+
+/interface ethernet
+set [ find default-name=ether6 ] comment=fancher.dem
+
+[admin@R1.dem] /interface ethernet> /
+[admin@R1.dem] > exp
+# jan/02/1970 00:14:15 by RouterOS 6.45.9
+# software id = DY8J-B1WX
+#
+# model = CRS112-8P-4S
+# serial number = D2600DC43EA9
+
+
+#---------------------- start here
+/interface bridge
+add name=bridge1
+
+/interface ethernet
+set [ find default-name=ether6 ] comment=fancher.dem
+
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+
+/ip hotspot profile
+set [ find default=yes ] html-directory=flash/hotspot
+
+/routing ospf instance
+set [ find default=yes ] distribute-default=if-installed-as-type-1 in-filter=AMPR-default out-filter=AMPR-default \
+    redistribute-bgp=as-type-1 redistribute-connected=as-type-1 redistribute-other-ospf=as-type-1 router-id=\
+    44.12.128.225
+	
+/interface bridge port
+add bridge=bridge1 comment=defconf interface=ether1
+add bridge=bridge1 comment=defconf interface=ether2
+add bridge=bridge1 comment=defconf interface=ether3
+add bridge=bridge1 comment=defconf interface=ether4
+add bridge=bridge1 comment=defconf interface=ether5
+add bridge=bridge1 comment=defconf interface=ether6
+add bridge=bridge1 comment=defconf interface=ether7
+add bridge=bridge1 comment=defconf interface=ether8
+add bridge=bridge1 comment=defconf interface=sfp9
+add bridge=bridge1 comment=defconf interface=sfp10
+add bridge=bridge1 comment=defconf interface=sfp11
+add bridge=bridge1 comment=defconf interface=sfp12
+
+/interface bridge settings
+set use-ip-firewall=yes use-ip-firewall-for-pppoe=yes use-ip-firewall-for-vlan=yes
+
+/interface ovpn-server server
+set cipher=aes256 enabled=yes
+
+/ip address
+add address=44.12.128.225/28 interface=ether1 network=44.12.128.224
+
+/ip dns
+set allow-remote-requests=yes servers=8.8.8.8,8.8.4.4
+
+/routing filter
+add action=accept chain=AMPR-default prefix=44.0.0.0/8 prefix-length=8-32
+add action=accept chain=AMPR-default prefix=0.0.0.0/0
+add action=reject chain=AMPR-default
+
+/routing ospf interface
+add authentication=md5 authentication-key=ABBABBABB interface=ether6 network-type=broadcast
+
+/routing ospf network
+add area=backbone network=44.12.128.224/28
+
+/system identity
+set name=R1.dem
+[admin@R1.dem] >

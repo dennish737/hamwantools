@@ -17,7 +17,7 @@ import logging
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
-from parsers.dbtools import DbSqlite
+from libs.dbtools import DbSqlite
 
 def main(args):
     dirs = check_dirs(['outputs', 'logs'])
@@ -28,7 +28,7 @@ def main(args):
     now = datetime.now()
 
     if args.log is None:
-        log_file = os.path.join(log_dir, ('add_paths' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
+        log_file = os.path.join(log_dir, ('add_interfaces' + now.strftime("%Y_%m_%d_%H_%M_%S") + '.log'))
     print(log_file)
 
     logging.basicConfig(filename=log_file, encoding='utf-8', level=logging.DEBUG)
@@ -43,19 +43,19 @@ def main(args):
         site_id = db.getSiteId(org_id, args.site)
 
     df = db.getSiteAvailableEquipmentInterfaces(org_id, site_id=site_id)
+    if df is not None:
+        records = []
+        for idx, row in df.iterrows():
+            record = (row['e_id'], row['if_type'], row['if_name'])
+            records.append(record)
 
-    records = []
-    for idx, row in df.iterrows():
-        record = (row['e_id'], row['if_type'], row['if_name'])
-        records.append(record)
-
-    query = 'INSERT OR IGNORE INTO interfaces (equip_id, if_type, if_name) VALUES (?,?,?);'
-    cursor = db.conn.cursor()
-    cursor.executemany(query, records)
-    db.conn.commit()
+        query = 'INSERT OR IGNORE INTO interfaces (equip_id, if_type, if_name) VALUES (?,?,?);'
+        cursor = db.conn.cursor()
+        cursor.executemany(query, records)
+        db.conn.commit()
+    else:
+        raise Exception("no site interfaces defined")
     cursor.close()
-
-
 
 def check_dirs(dir_list):
     global base_dir
@@ -80,8 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log', default = None, help='logging file, default will be system name')
 
     if TEST == True:
-        in_args = ['-c', 'example_club','--db', '../data/planning_example.sqlite3']
-        #in_args = ['-c', 'spokane','--csv', '--db', '../data/planning_spokane.sqlite3']
+        #in_args = ['-c', 'example_club','--db', '../data/planning_example.sqlite3']
+        in_args = ['-c', 'spokane','--db', '../data/spokane_example.sqlite3']
         args = parser.parse_args(in_args)
     else:
         args = parser.parse_args()

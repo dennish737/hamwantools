@@ -13,7 +13,7 @@ import logging
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print("base_dir = ",base_dir)
 sys.path.insert(0, base_dir)
-from parsers.dbtools import DbSqlite
+from libs.dbtools import DbSqlite
 
 """
 tool to add one or more paths to an organization site

@@ -1,10 +1,14 @@
 ﻿name,site_a,site_b,type_id
-path1,GW,SITE1,BPTP
-path2,GW,SITE2,BPTP
-path3,GW,SITE3,BPTP
-path4,GW,SITE4,BPTP
-path5,SITE1,SITE5,BPTP
-path6,SITE2,SITE6,BPTP
-path7,SITE3,SITE7,BPTP
-path8,SITE4,SITE8,BPTP
+path1,gw,site1,BPTP
+path2,gw,site2,BPTP
+path3,gw,site3,BPTP
+path4,gw,site4,BPTP
+path5,site1,site5,BPTP
+path6,site2,site6,BPTP
+path7,site3,site7,BPTP
+path8,site4,site8,BPTP
+path9,site2,site5,BPTP
+pathA,site3,site6,BPTP
+pathB,site2,site7,BPTP
+pathC,site3,site8,BPTP
 

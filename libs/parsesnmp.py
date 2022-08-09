@@ -2,15 +2,15 @@ import json
 import pprint
 import logging
 
-from parsers.baseparser import BaseParser
+from libs.baseparser import BaseParser
 
 #parse config file for global ip settings
-class ParseSystem(BaseParser):
+class ParseSNMP(BaseParser):
     def __init__(self, mode, device_type, template_file):
         super().__init__(mode, device_type)
-        self.__name__ = 'ParseSystem'
+        self.__name__ = 'ParseSNMP'
 
-        self.section = 'system'
+        self.section = 'snmp'
 
         self.region_parameters = None
         self.router_parameters = None
@@ -18,7 +18,7 @@ class ParseSystem(BaseParser):
         self.router_keys = []
         with open(template_file) as json_file:
             raw_data = json.load(json_file)[mode][device_type]
-            if self.section in raw_data:
+            if self.section in raw_data.keys():
                 self.data = raw_data[self.section]
             else:
                 self.data = None
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     # used for testing
 
-    from parsers.dbtools import DbSqlite
+    from libs.dbtools import DbSqlite
 
     db_file = "../data/region9_hamwan.sqlite3"
     template_file = '../templates/ptp_config.json'
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         print(router_params)
     print("------------")
 
-    p = ParseSystem(mode, device_type, template_file)
+    p = ParseSNMP(mode, device_type, template_file)
     p.addParameters(region_params, router_params)
 
     commands = []

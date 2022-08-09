@@ -2,7 +2,7 @@ import json
 import pprint
 import logging
 
-from parsers.baseparser import BaseParser
+from libs.baseparser import BaseParser
 
 #parse config file for global ip settings
 class ParseGlobalIP(BaseParser):
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # used for testing
 
-    from parsers.dbtools import DbSqlite
+    from libs.dbtools import DbSqlite
 
     db_file = "../data/region9_hamwan.sqlite3"
     template_file = '../templates/ptp_config.json'

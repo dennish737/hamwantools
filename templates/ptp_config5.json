@@ -15,10 +15,12 @@
 					"activities": {
 						"create": {
 							"command": "/interface bridge",
-							"actions": [{
-								"action": "add",
+							"operations": [{
+								"operation": "add",
 								"params": {
-									"name": "localloopback0"
+									"name": "localloopback0",
+									"disable": "no",
+									"protocol-mode": "rstp"
 								}
 							}]
 						}
@@ -28,12 +30,11 @@
 					"activities": {
 						"ip_address": {
 							"command": "/ip address",
-							"actions": [{
-								"action": "add",
+							"operations": [{
+								"operation": "add",
 								"params": {
 									"address": "ether1_ip",
-									"interface": "ether1",
-									"network": "tag tbd"
+									"interface": "ether1"
 								}
 							}]
 						}
@@ -43,15 +44,14 @@
 					"activities": {
 						"create": {
 							"command": "/interface wireless",
-							"actions": [{
-								"action": "set [ find default-name=wlan1 ]",
+							"operations": [{
+								"operation": "set [ find default-name=wlan1 ]",
 								"params": {
 									"band": "5ghz-onlyac",
 									"disabled": "no",
-									"country": "united states",
+									"country": "no_country_set",
 									"frequency-mode": "superchannel",
 									"frequency": "5700 ",
-									"mode": "ap-bridge",
 									"nv2-cell-radius": "100 ",
 									"nv2-preshared-key": "backbonekey",
 									"radio-name": "routername",
@@ -64,19 +64,18 @@
 						},
 						"ip_address": {
 							"command": "/ip address",
-							"actions": [{
-								"action": "add",
+							"operations": [{
+								"operation": "add",
 								"params": {
 									"address": "wlan1_ip",
-									"interface": "wlan1",
-									"network": "tag tbd"
+									"interface": "wlan1"
 								}
 							}]
 						},
 						"security_profile": {
 							"command": "/interface wireless security-profile",
-							"actions": [{
-								"action": "set [ find default=yes ]",
+							"operations": [{
+								"operation": "set [ find default=yes ]",
 								"params": {
 									"supplicant-identity": "Mikrotik"
 								}
@@ -88,8 +87,8 @@
 					"activities": {
 						"create": {
 							"command": "/interface vrrp",
-							"actions": [{
-								"action": "add",
+							"operations": [{
+								"operation": "add",
 								"params": {
 									"authentication": "ah",
 									"interface": "ether1",
@@ -101,8 +100,8 @@
 						},
 						"ip_address": {
 							"command": "/ip address",
-							"actions": [{
-								"action": "add",
+							"operations": [{
+								"operation": "add",
 								"params": {
 									"address": "defaultgateway",
 									"interface": "vrrp1"
@@ -116,8 +115,8 @@
 				"activities": {
 					"settings": {
 						"command": "/ip settings",
-						"actions": [{
-							"action": "set",
+						"operations": [{
+							"operation": "set",
 							"params": {
 								"send-redirects": "no"
 							}
@@ -125,10 +124,10 @@
 					},
 					"firewall": {
 						"command": "/ip firewall mangle",
-						"actions": [{
-							"action": "add",
+						"operations": [{
+							"operation": "add",
 							"params": {
-								"action": "change-mss",
+								"operation": "change-mss",
 								"chain": "output",
 								"new-mss": "1378",
 								"protocol": "tcp",
@@ -139,8 +138,8 @@
 					},
 					"services": {
 						"command": "/ip service",
-						"actions": [{
-							"action": "set ssh",
+						"operations": [{
+							"operation": "set ssh",
 							"params": {
 								"port": "22"
 							}
@@ -152,8 +151,8 @@
 				"activities": {
 					"community": {
 						"command": "/snmp community",
-						"actions": [{
-							"action": "set [ find default=yes ]",
+						"operations": [{
+							"operation": "set [ find default=yes ]",
 							"params": {
 								"address": "network_allocation",
 								"name": "hamwan"
@@ -162,8 +161,8 @@
 					},
 					"contact": {
 						"command": "/snmp",
-						"actions": [{
-							"action": "set ",
+						"operations": [{
+							"operation": "set ",
 							"params": {
 								"contact": "\"#HamWAN-Support on irc.freenode.org\"",
 								"enable": "yes"
@@ -176,9 +175,9 @@
 				"activities": {
 					"identity": {
 						"command": "/system identity",
-						"actions": [
+						"operations": [
 							{
-								"action": "set",
+								"operation": "set",
 								"params": {
 									"name": "sys_name"
 								}
@@ -187,8 +186,8 @@
 					},
 					"clock": {
 						"command": "/system clock",
-						"actions": [{
-							"action": "set",
+						"operations": [{
+							"operation": "set",
 							"params": {
 								"time-zone-autodetect": "no",
 								"time-zone-name": "timezone"
@@ -197,8 +196,8 @@
 					},
 					"led1": {
 						"command": "/system leds",
-						"actions": [{
-							"action": "set 1",
+						"operations": [{
+							"operation": "set 1",
 							"params": {
 								"interface": "wlan1"
 							}
@@ -206,8 +205,8 @@
 					},
 					"tools": {
 						"command": "/tool bandwidth-server",
-						"actions": [{
-							"action": "set",
+						"operations": [{
+							"operation": "set",
 							"params": {
 								"authenticate": "no"
 							}

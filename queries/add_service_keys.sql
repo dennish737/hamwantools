@@ -1,9 +1,6 @@
---
-BEGIN TRANSACTION;
-INSERT INTO services_pwd (org_id, tag, passwd)
-VALUES ((SELECT org_id FROM organizations WHERE lower(club_name) = lower('spokane')), 'wirelesskey', 'mykey'),
-    ((SELECT org_id FROM organizations WHERE lower(club_name) = lower('spokane')), 'backbonekey', 'mykey'),
-    ((SELECT org_id FROM organizations WHERE lower(club_name) = lower('spokane')), 'vrrpkey', 'mykey'),
-    ((SELECT org_id FROM organizations WHERE lower(club_name) = lower('spokane')), 'ospfkey', 'mykey');
-
-COMMIT;
+INSERT INTO services_pwd (org_id, site_id, tag, password)
+VALUES
+    ((SELECT x.org_id FROM organizations x WHERE lower(x.club_name) = 'example_club'), NULL, 'vrrpkey', 'mykey'),
+    ((SELECT x.org_id FROM organizations x WHERE lower(x.club_name) = 'example_club'), NULL, 'ospfkey', 'mykey');
+--    ((SELECT x.org_id FROM organizations x WHERE lower(x.club_name) = 'spokane'), NULL, 'vrrpkey', 'mykey'),
+--    ((SELECT x.org_id FROM organizations x WHERE lower(x.club_name) = 'spokane'), NULL, 'ospfkey', 'mykey');

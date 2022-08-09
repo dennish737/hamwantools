@@ -2,14 +2,15 @@ import json
 import pprint
 import logging
 
-from parsers.baseparser import BaseParser
+from libs.baseparser import BaseParser
 
-# parses config file to router interfaces
-class ParseRouting(BaseParser):
-    def __init__(self, mode, device_type,template_file):
+#parse config file for global ip settings
+class ParseSystem(BaseParser):
+    def __init__(self, mode, device_type, template_file):
         super().__init__(mode, device_type)
-        self.__name__ = 'ParseRouting'
-        self.section = 'routing'
+        self.__name__ = 'ParseSystem'
+
+        self.section = 'system'
 
         self.region_parameters = None
         self.router_parameters = None
@@ -23,19 +24,18 @@ class ParseRouting(BaseParser):
                 self.data = None
         logging.debug("starting {}".format(self.__name__))
 
-
     def getTypeList(self):
-        type_list = list(self._get_dict_keys(self.data))
+        type_list = []
         return type_list
 
-    def getActivities(self, device):
-        activities = self.data[device]["activities"]
+    def getActivities(self):
+        activities = self.data["activities"]
         activities_list = list(self._get_dict_keys(activities))
         return activities_list
 
-    def parseSettings(self, device, activity, region_params=None, router_params=None):
+    def parseSettings(self,  activity, region_params=None, router_params=None):
         commands = []
-        activities_list = self.data[device]["activities"][activity]
+        activities_list = self.data["activities"][activity]
         for key, value in activities_list.items():
             if key == 'command':
                 commands.extend(self._command(value))
@@ -44,17 +44,15 @@ class ParseRouting(BaseParser):
         #print(commands)
         return commands
 
-
-
 if __name__ == '__main__':
+
     # used for testing
-    from parsers.dbtools import DbSqlite
+
+    from libs.dbtools import DbSqlite
 
     db_file = "../data/region9_hamwan.sqlite3"
     template_file = '../templates/ptp_config.json'
     mode = 'config'
-    device_type = 'PTP'
-
     operation = 'config'
     device_name = "SPODEM.PTP1"
     region = 9
@@ -74,20 +72,13 @@ if __name__ == '__main__':
         print(router_params)
     print("------------")
 
-    p = ParseRouting(mode,device_type, template_file)
+    p = ParseSystem(mode, device_type, template_file)
     p.addParameters(region_params, router_params)
-    print("region_keys:", p.region_keys)
-    print("router_keys:", p.router_keys)
 
-    interfaces = p.getTypeList()
-    print(interfaces)
     commands = []
-    print("--------------------")
-    for interface in interfaces:
-        activities = p.getActivities(interface)
-        #print(activities)
-        for activity in activities:
-            commands.extend(p.parseSettings(interface, activity, region_params, router_params ))
+    activities = p.getActivities()
+    for activity in activities:
+        commands.extend(p.parseSettings( activity, region_params, router_params ))
 
     for command in commands:
         print(command)
