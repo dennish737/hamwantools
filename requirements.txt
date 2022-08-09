@@ -6,3 +6,4 @@ requests
 ipaddress~=1.0.23
 numpy
 pandas~=1.4.3
+django==3.2

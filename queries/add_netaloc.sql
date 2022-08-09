@@ -6,6 +6,7 @@
 -- before the allocations can be added to the data base
 
 -- planners should update the information before running script
+BEGIN;
 INSERT INTO network_allocations (org_id, network_allocation, starting_address, ending_address, subnet_mask)
 VALUES ((select org_id from organizations where club_name = 'example_club'),
     '10.12.128.0/21', '10.12.128.0', '10.12.135.255',21);
