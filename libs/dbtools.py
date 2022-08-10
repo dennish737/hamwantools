@@ -915,7 +915,7 @@ class DbSqlite():
 
     def _getOrgPTPSecurity(self, org_id):
         query = "SELECT ssid as ptp_ssid, passwd as password FROM ptp_security WHERE org_id = ? AND path_id is NULL ORDER BY id;"
-        results = self.getQueryDictionary(query, org_id, site_id)
+        results = self.getQueryDictionary(query, org_id)
         print("_getOrgPTPSecurity: results = ", results)
         return results
 
