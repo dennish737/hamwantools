@@ -50,12 +50,18 @@ For additional requirements please see the [ReadMe](../README.md)
 ## Database Design
 In our discussion [Planning Your Network](./PlanningYourNetwork.md) we talked about sites, equipment 
 and path (primarily backbone PTP paths). We also talked about getting a block of addresses for
-your network, and creating an organization to build and control the site. Each of these translates
-into a database table, with additional tables for address blocks and ptp blocks and ip_addresses.
+your network, and creating an organization to build and control the site. Our next step is to identify 
+which items will vary between simular devices (device class) such as IP addresses, interfaces and other
+system (network) parameters like logging, snmp, dhcp services, etc. We do this by constructing tables
+for our components, with additional tables for address blocks and ptp blocks and ip_addresses.
 
-As we build out the DB, python tools were written to build out tables. For example on site equipment,
+As we build out the DB, python tools were written to assist in build out tables. For example on site equipment,
 the input is a CSV file, but we do not require the equipment name. Instead, the tools automatically
 build the name for you. 
+
+Also tools will be written to assign routers to sectors and ptp paths, and assign ip address blocks.
+
+Finally, some tools will be written to generate config files for each of hte class of devices.
 
 
 ### DB Schema
@@ -104,7 +110,7 @@ the tables, using the unique id, to identify the type.
 
  1) open DB Browser
  2) Open your database 
- 3) Select the Execute SQL tab and select the open file
+ 3) Select to Execute SQL tab and select the open file
  4) Select the ../query/add_types.sql
  5) Click the run button
 
@@ -187,18 +193,19 @@ so we can protect the network for bad actors. The problem we will face is, how d
 security, without increasing our management complexity to a point where our network is not
 maintainable? 
 There are certain items that we want to keep common network wide, such as the Sector SSIDs and passwords,
-since these will be used by clients, while we may want to supply separate for sites and paths. We also may want to 
+since these will be used by clients, while we may want to supply separate keys for sites and paths. We also may want to 
 separate information by service, such as SNMP. 
-Because of this we have designed the database to accept security information for organization, site, 
-path and snmp service, with the rule that lowest level security parameters tak presence.
+Because of this we have designed the database to have security tables for client security, ptp security,
+and system services security. Each table allows entries for all sites/paths, or specific site/paths. 
 
 By leaving the 'site' or 'path' number blank, defines a default set of keys that are applied network
-wide. If a site or path id is provided, then the site keys will override the default keys.
+wide. If a site or path id is provided, then the site keys will override the network wide default keys.
 
  1) open the ./queries/add_service_keys.sql in DB Browser Execute SQL window
  2) Edit the key_val values for your organization
  3) Click the run button
 
+In our add_service_keys.sql example for each table.
 
 ### Add Global Parameters
 General parameters can be applied to the network or site level of the network. These parameters
@@ -207,13 +214,27 @@ include but are not limited to:
  - dns
  - ntp
  - time zone
+ - snmp
 
-If parameters re entered with a site_id, they are site specific parameters. While if the site_id
+The global parameters consist of two tables, the global parameters table (global_parameters) and the
+snmp parameters (snmp_parameters). Again these parameters can be set for the network or for a site.
+If parameters are entered with a site_id, they are site specific parameters. While if the site_id
 is left empty (NULL) they are network parameters. If there are no global site parameters, the network
 parameters will be used.
 
-TBD instructions for loading example network global parameters
+The snmp parameters are all the required parameters of setting up the snmp equipment management.
 
+TBD add information on Mikrotik SNMP
+
+#### Loading global parameters
+ 1) open the ./queries/global_params.sql in DB Browser Execute SQL window
+ 2) Edit the key_val values for your organization
+ 3) Edit the Log and DNS server information
+ 4) Click the run button
+
+TBD add snmp parameter script
+
+## Adding Equipment and Interfaces
 
 ### Add Equipment to sites
 
@@ -221,29 +242,25 @@ Example: python ./tools/add_equipment.py -c example_club --csv ./examples/equipm
 
 ### Add Equipment to Paths
 
-Example:python ./tools/add_equipment2path.py -c example_club --db ./data/planning_example.sqlite3
+Example:python ./tools/add_equipment2path.py -c spokane --db ./data/spokane_example.sqlite3
 
 ### Add your Interfaces
 
-Example:python ./tools/add_interfaces.py -c example_club --db ./data/planning_example.sqlite3
+Example:python ./tools/add_interfaces.py -c spokane --db ./data/spokane_example.sqlite3
+
+## Network Allocation
 
 ### Add network allocation
  use add_netaloc.sql
 ### Construction your allocation and ptp blocks
 
-Example:python ./tools/add_ipaddresses.py -c example_club --db ./data/planning_example.sqlite3
+Example:python ./tools/add_ipaddresses.py -c spokane --db ./data/spokane_example.sqlite3
 
-### Add Equipment to the Paths
-
-Example:python ./tools/add_equipment2path.py -c spokane --db ./data/spokane_example.sqlite3
-
-### Add Interfaces
+### Assign IP Addresses to Interfaces
 
 Example:python ./tools/assign_ip2interfaces.py -c spokane --db ./data/spokane_example.sqlite3
 
-### Assign IP Address to Interfaces
 
-Example: python ./tools/assign_ip2interfaces.py -c spokane --db ./data/spokane_example.sqlite3 
 
 
 
