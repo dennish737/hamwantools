@@ -26,15 +26,66 @@ allocated to amateur radio (HAMs). While Backbone connections do not.
 Essentially HamWAN is a WISP (Wireless Internet Service Provider) with a class A network address
 space, that will share that address space with licensed Ham Radio Clubs.
 
+## HamWan Components
+
+### Bridge/Router
+#### Goals of a Bridge/Router
+    1. Route trafic to different elements on the site
+    2. Ruute trafic to different sites through PTP Connections
+    3. Provide fixed or DHCP Addresses to site equipment
+    4. If a gateway site, provide access to the internet via ISP
+
+#### Overview
+Each site has a 'Bridge/Router' that manages the site, providing the fixed and dhcp IP 
+addresses for the ether interfaces of the site devices (sector and PTP). This device is configured as a 
+bridge, mapping all wired interfaces to a single ip address. The device also has ospf routes to
+for sector and ptp connection. 
+
+This device is assigned a sixteen address block from the site IP allocation.
+
+Troubleshooting tip: Mikrotik allow adding comment tags to interface, routes, etc. When adding a port
+to a bridge, we can add comments to identify what the connection is going to
+
+### Sector Router
+#### Goals of a Sector Router
+    1. Provide PTMP connections to Clients
+    2. DHCP Service for Clients
+    3. Default Gateway for routing trafic
+    4. Route trafic between clients and the site Bridge/Router
+
+#### Overview
+The sector router connects to the site Bridge/Router through the ether interface, and connect to clients
+though a wireless connection to the Clients. Each sector covers a 120 degree area, and three (3) sectors are required 
+for 360 degrees. 
+
+When a Client connects to a sector, they receive an IP address from a DHCP server. These IP addresses 
+are assigned to the sector router in blocks from the IP address allocation. 
+The typical block size of sixteen (16) addresses is used, but block sizes that are larger or 
+smaller can be used. The only requirement is the block size be a power of two (2).
+
+The frequencies used for sector client connections are HAM frequencies and must not use encryption.
+
+### Backbone PTP Router
+#### Goals of PTP Router
+    1. Route Trafic between two sites
+
+#### Overview
+The backbone ptp routers are used to interconnect the sites through PTP wireless. These routers are 
+connected to the Bridge/Router via ethernet interface  (etherN) and have a fix IP address provide by the 
+Bridge/Router, and toe another Site via the wireless interface.
+These wireless routers do
+not use Ham Frequencies, allowing the use of secure communications between sites. PTP connections use
+/31 networks, requiring a pair of IP address that are equidistant apart. We need one pair of addresses
+for each path. 
+
 ## Allocating addresses to subnets
 How you allocate IP addresses will depend on the number of addresses you receive. Traditionally, a 2048 block
 (8 class C networks) is assigned to a club. One group of 256 addresses (one (1) class 'C' network) is 
 allocated for PTP Backbone, and is broken down into /31 networks of 2 adjacent IP addresses.
 Another group of 256 addresses routing interface IPs. The remaining address are then divided into blocks of
-sixteen (16) addresses each and are reserved for the site switch and sector equipment, with each switch getting one block,
-and each sector getting 2 blocks.  
-
-You want to allocate more blocks to those sites which have more clients.
+sixteen (16) addresses each and are reserved for the site switch and sector equipment, with each 
+switch getting one block, and each sector getting 2 blocks, one active and one reserved. The reserved
+address blocks can be reassigned later to those site with larger client requirements.
 
 ### Minimum number of PTP addresses
 PTP networks use /31 networks which is one pair of adjacent IP addresses (one for each end
@@ -77,5 +128,6 @@ client, and backbone connections.
 
 For our systems we are using the following devices:
 
+Bridge/Router Switch - CRS112-8P-4S
 Backbone Device: Mikrotik Net Metal 5 - RB922UAGS-5HPacD-NM
 Sectors: Mikrotik RB912UAGPnD + StationBox S

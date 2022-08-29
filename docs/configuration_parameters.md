@@ -7,7 +7,7 @@ the different devices. The final section will discuss the tools for generating t
 configuration files.
 
 As we built out the network we discussed a hierarchy organization of Organizations, Sites, and Paths.
-Where Sites would have Device, and Interfaces, and Paths were used to connect devices (primarily
+Where Sites would have Device, and Interfaces, and Paths were used to connect sites and clients (primarily
 backbone PTP connections).
 
 The same is true for 'parameters'. There are parameters that are applied across all the equipment the
@@ -32,21 +32,30 @@ parameters taking precedence over higher levels.
 We need to be a little careful here, what we can do and what we should do are quite different. 
 For example, though we could apply SSID and password at the 'Device Level',  like we might do for
 backbone PTP connections, it would be best if we used the same SSID and password for all the 
-sectors on a site if not all the sectors in the network.
+sectors on a site if not all the sectors in the network, simplifying the client configuration.
 
-To implement our device and interface configuration, by using the concept of Templates and Parameters. First we develop a template to configure
-a class of Devices (e.g. router, sector, ptp, client, ...), Determine what changes from Device to Device,
-and identify those items as parameters in the template.
+In the DB design, and build we took into account theses various constraints, and provided examples
+of how to enter the data in the DB for various scenarios.
 
-Each device class will have it own Template
+We are now ready to begin the development of our tools for building configuration files for our 
+devices, and will be using the concept of Templates and Parameters. First we develop a template 
+to configure a class of Devices (e.g. router, sector, ptp, client, ...). Determine what items in the template
+are fixed for the type of device, and what items will change from Device to Device. We then develop 
+a set of query tools for extracting the needed data from the database, and link these parameters
+to a 'tag' in the template. Finally, we substitute the template tags wih the actual DB parameters.
+
+For our design, each device class ( bridge/router, sector router, ptp router)will have its 
+own template. We will also have different templates for different physical devices of the same class
+(e.g. a new or different switch).
 
 ## Templates
 Templates are used to configure a class of Devices and sets of 'command', 'action', 'attributes'.
 For any given command, there may be many actions, and each action will have its own set of attributes.
 attributes are sent as 'key'='value' separated by a space(e.g. address=192.16.88.1  interface=local ...).
-Some 'attributes', are fixed for a given device(e.g. frequency=5700 disabled=no), while others we will need to be changed.
+Some 'attributes', are fixed for a given device(e.g. frequency=5700 disabled=no), while others we 
+will need to be changed based on site characteristics (e.g. IP addresses, SSID, key values etc.).
 To do that we add a parameter 'key' to the attribute value (e.g. address=if_ether_ip). and as we
-generate the config file, substitute the parameter value 
+generate the config file, substitute the parameter value.
 
 To simplify the configuration, template files are broken into sections
 
@@ -56,11 +65,11 @@ Requesting the interface parameters, returns a set of parameters for all the dev
  * Routing  
 The routing sections contains all the routing parameters for the device
  * Global_IP  
-The global_ip section provides the ip parameters used for all devices
+The global_ip section provides the ip parameters used for all devices at a site
  * SNMP  
 The snmp section provides the snmp configuration information.
  * System  
-general system and site settings
+general system and security site settings
 
 Each of these sections has a separate 'parser' which reads that section of the template file and substitutes the
 parameters
@@ -69,16 +78,17 @@ parameters
 Parameters are the things that change from Device to Device (e.g. identity, ip addresses, etc.). As we have discussed, we allow 
 parameters to be defined at multiple levels and rules of precedence:
 
- * Global - parameters that apply to the network a large
+ * Global - default parameters to use for a device, if no site or device parameter is specified
  * Site   - parameters that are specific to a Site
  * Device - Parameters that are specific to a device
  * Path   - Parameters that apply to a specific path
 
-When a parser is invoked, the parameters for each group are provided, and the parser determines which parameter ot use
-based on precedence rules.
+These parameters are read and merged into a single set of parameters based on the rule sof residence.
 
 Parameters are identified as a key value pair, where the key is a tag used in the Template, 
 and the value is the value to be substituted.
+
+
 
 ### Global Parameters
 Global parameters provide information which is common site throughout the network. Global parameters
@@ -130,17 +140,49 @@ WHERE site_id is NULL AND org_id = (SELECT x.org_id FROM organizations x WHERE l
  * dns2: secondary dns server
  * ntp1: primary ntp server
  * ntp2: secondary server
- * vrrp_id: virtual router protocol identifier
- * wireless: ssid wireless network SSID
- * backbone: ssid of backbone
 
 In addition to the site parameters there is a set of site security keys
- * wirelesskey: 
- * backbonekey:
+ * client_ssid: 
+ * client_password
+ * ptp_ssid:
+ * ptp_password
  * vrrpkey:
  * ospfkey:
 
 ### Device Parameters
+#### Bridge/Router and Sector Router Parameters
+ 1. sys_name
+ 2. routername
+ 3. ether1_ip
+ 4. ospf_ip
+ 5. netaddress
+ 6. ospf_netaddr
+ 7. wlan1_ip
+ 8. wlanaddress
+ 9. radioname
+ 10. vrrp1
+ 11. vrrp1network
+ 12. dhcp
+     * pool_name
+     * network
+     * lower_addr
+     * upper_addr
+     * gateway_addr
+     * dns_addr
 
+If a device does not have a wireless or vrrp interface, 
+no parameters are returned. Likewise for DHCP
 
 ### Path Parameters
+ 1. sys_name
+ 2. routername
+ 3. ether1_ip
+ 4. ospf_ip
+ 5. netaddress
+ 6. ospf_netaddr
+ 7. wlan1_ip
+ 8. remoteip
+ 9. _from
+ 10. _to
+ 11. radioname
+ 12. remote_router_name

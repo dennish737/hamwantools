@@ -6,6 +6,16 @@
 -- Version 1.0.0
 
 --PRAGMA foreign_keys = OFF;
+
+--DROP TABLE IF EXISTS "string_substitutes";"
+CREATE TABLE IF NOT EXISTS "string_substitutes" (
+    "id"	INTEGER NOT NULL,
+    template_name TEXT NOT NULL,
+    dict_name TEXT NOT NULL,
+    PRIMARY KEY("id" AUTOINCREMENT),
+    UNIQUE("template_name")
+);
+
 --DROP TABLE IF EXISTS "equipment_groups";
 CREATE TABLE IF NOT EXISTS "equipment_groups" (
 	"id"	INTEGER NOT NULL,
@@ -127,7 +137,7 @@ CREATE TABLE IF NOT EXISTS "global_parameters" (
 	"ntp1"		TEXT,
 	"ntp2"		TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT),
-	FOREIGN KEY ("org_id") REFERENCES organizations(id)
+	FOREIGN KEY ("org_id") REFERENCES organizations("org_id")
 	UNIQUE(org_id, site_id)
 );
 

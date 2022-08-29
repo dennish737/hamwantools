@@ -1,3 +1,5 @@
+# Mikrotik Docs
+[General Commands](https://help.mikrotik.com/docs/display/ROS/Command+Line+Interface)
 
 
 
@@ -16,7 +18,7 @@
 
 [Paramiko Docs](https://docs.paramiko.org/en/stable/)
 
-
+[routeros scripts](https://github.com/eworm-de/routeros-scripts)
 
 
 
@@ -36,6 +38,8 @@
 [Multi Area OSPF](https://www.youtube.com/watch?v=PIMnj2oqYIo)
 
 [OSPF Neighborship](https://www.youtube.com/watch?v=ynmsapjWGxY)
+
+[Reposity based RouterOS scripts distribution](https://www.youtube.com/watch?v=B9neG3oAhcY)
 
 [OPSF Setup Microtik](https://www.youtube.com/watch?v=NuJio20QZ9Y)
 
