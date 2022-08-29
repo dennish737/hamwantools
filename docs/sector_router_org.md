@@ -15,7 +15,7 @@ Let's start by looking at a configuration file for a Sector Router.
 Below is a dump of a configuration file for a Switch/Router
 ### Dump File
 
-#Interfscs -------------------------------------------------------------------
+#Interfacs -------------------------------------------------------------------  
 /interface wireless  
 set [ find default-name=wlan1 ] band=5ghz-onlyn channel-width=10mhz country="united states" disabled=no frequency=5920 frequency-mode=superchannel mode=ap-bridge ssid=<span style="color:red">*WAConnect*</span> wireless-protocol=nv2
 

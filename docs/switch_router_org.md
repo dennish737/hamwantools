@@ -119,35 +119,34 @@ servers. To allow for multiple interface, we use text_parameters to map the inte
 ## Mapping
 The following mapping table is used to map template parameters to database parameters:
 
-|ETHER1_IP           |device_parameters  |ether1_ip           |
-|--------------------|-------------------|--------------------|
-|NETWORK_ADDRESS     |device_parameters  |network_address     |
-|OSPF_NETWORK_ADDRESS|device_parameters  |ospf_network_address|
-|OSPF_ROUTER_ID      |device_parameters  |ospf_router_id      |
-|RADIO_NAME          |device_parameters  |radio_name          |
-|REMOTE_IP           |device_parameters  |remote_ip           |
-|REMOTE_ROUTER_NAME  |device_parameters  |remote_router_name  |
-|ROUTER_NAME         |device_parameters  |router_name         |
-|SYS_NAME            |device_parameters  |sys_name            |
-|VRRP1_IP            |device_parameters  |vrrp1_ip            |
-|WLAN1_IP            |device_parameters  |wlan1_ip            |
-|CLUB_CONTACT        |global_parameters  |club_contact        |
-|DNS1_IP             |global_parameters  |dns1                |
-|DNS2_IP             |global_parameters  |dns2                |
-|LOGGING1_IP         |global_parameters  |logging1_ip         |
-|LOGGING2_IP         |global_parameters  |logging2_ip         |
-|NTP1_IP             |global_parameters  |ntp1_ip             |
-|NTP2_IP             |global_parameters  |ntp2_ip             |
-|TOMEZONE            |global_parameters  |timezone            |
-|CLIENT_SSID         |gsecurty_parameters|client_ssid         |
-|Template_name       |param_dict         |dict_name           |
-|CLIENT_PASSWORD     |security_parameters|client_password     |
-|OSPF_KEY            |security_parameters|ospf_key            |
-|VRRP_KEY            |security_parameters|vrrp_key            |
-|ETHER1              |text_parameters    |ether1              |
-|VRRP1               |text_parameters    |vrrp1               |
-|WLAN1               |text_parameters    |wlan1               |
-
+| Template_name        | param_dict          | dict_name            |
+|----------------------|---------------------|----------------------|
+| CLIENT_PASSWORD      | security_parameters | client_password      |
+| CLIENT_SSID          | gsecurty_parameters | client_ssid          |
+| CLUB_CONTACT         | global_parameters   | club_contact         |
+| DNS1_IP              | global_parameters   | dns1                 |
+| DNS2_IP              | global_parameters   | dns2                 |
+| ETHER1               | text_parameters     | ether1               |
+| ETHER1_IP            | device_parameters   | ether1_ip            |
+| LOGGING1_IP          | global_parameters   | logging1_ip          |
+| LOGGING2_IP          | global_parameters   | logging2_ip          |
+| NETWORK_ADDRESS      | device_parameters   | network_address      |
+| NTP1_IP              | global_parameters   | ntp1_ip              |
+| NTP2_IP              | global_parameters   | ntp2_ip              |
+| OSPF_KEY             | security_parameters | ospf_key             |
+| OSPF_NETWORK_ADDRESS | device_parameters   | ospf_network_address |
+| OSPF_ROUTER_ID       | device_parameters   | ospf_router_id       |
+| RADIO_NAME           | device_parameters   | radio_name           |
+| REMOTE_IP            | device_parameters   | remote_ip            |
+| REMOTE_ROUTER_NAME   | device_parameters   | remote_router_name   |
+| ROUTER_NAME          | device_parameters   | router_name          |
+| SYS_NAME             | device_parameters   | sys_name             |
+| TIMEZONE             | global_parameters   | timezone             |
+| VRRP_KEY             | security_parameters | vrrp_key             |
+| VRRP1                | text_parameters     | vrrp1                |
+| VRRP1_IP             | device_parameters   | vrrp1_ip             |
+| WLAN1_IP             | device_parameters   | wlan1_ip             |
+| WLAN1                | text_parameters     | wlan1                |
 
 ### Interfaces
 For the Bridge/Router (Site Switch) we create a *bridge* and add all the 
@@ -242,4 +241,4 @@ add action=remote topics=!debug,!snmp
 /system ntp client  
 set enabled=yes primary-ntp=<span style="color:red">NTP1_IP</span> secondary-ntp=<span style="color:red">*NTP2_IP*</span>  
 
-End of File
+##End of File

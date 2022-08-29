@@ -822,6 +822,12 @@ class DbSqlite():
         results = self.getQueryDictionary(query, device_id)
         return results
 
+    def getSiteDeviceVRRPAddresses(self, org_id, equip_id):
+        query = """SELECT blk.id as block_id, blk.end_ip as vrrp_addr_id, blk.network as vrrp_network FROM address_blocks blk
+                WHERE blk.org_id = ? and blk.assigned = ? ORDER BY blk.id LIMIT 1"""
+        results = self.getQueryDictionary(query, org_id, equip_id)
+        return results
+
     def getSiteId(self, org_id, name):
         query = 'SELECT id FROM sites WHERE lower(name) = ? and org_id = ?;'
         cursor = self.conn.cursor()
@@ -1055,8 +1061,10 @@ class DbSqlite():
                 ptp_params['sys_name'] = iface['device_name']
                 ptp_params['router_name'] = iface['device_name']
             if iface['addr_id'] is not None:
-                ifname = iface['if_name'] + '_ip'
-                ptp_params[ifname] = self._getInterfaceIp(iface['addr_id'])
+                interface_name = iface['if_name'] + '_inerface'
+                ptp_params[interface_name] = iface['if_name']
+                ifname_ip = iface['if_name'] + '_ip'
+                ptp_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
                 if iface['if_type'] == 'wlan':
                     ptp_params["remote_ip"] = self._getInterfaceNetwork(iface['addr_id'])
                     ptp_params['_from'], ptp_params['_to'], ptp_params['radio_name'] = self._getPathName(
@@ -1069,7 +1077,6 @@ class DbSqlite():
         return ptp_params
 
     def getRouterParameters(self, info, device_id, club_callsign):
-
         router_params = {}
         dhcpblocks = []
         count = 0
@@ -1079,16 +1086,25 @@ class DbSqlite():
                 router_params['sys_name'] = iface['device_name']
                 router_params['router_name'] = iface['device_name']
             if iface['addr_id'] is not None and (iface['if_type'] == 'ether' or iface['if_type'] == 'wlan'):
-                ifname = iface['if_name'] + '_ip'
-                router_params[ifname] = self._getInterfaceIp(iface['addr_id'])
-                router_params['ospf_router_id'] = self._getOSPFIP(router_params[ifname])
+                interface_name = iface['if_name'] + '_inerface'
+                router_params[interface_name] = iface['if_name']
+                ifname_ip = iface['if_name'] + '_ip'
+                router_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
+                router_params['ospf_router_id'] = self._getOSPFIP(router_params[ifname_ip])
                 if iface['if_type'] == 'wlan':
                     router_params['radio_name'] = club_callsign + iface['device_name']
                     router_params['wlan_address'] = self._getInterfaceNetwork(iface['addr_id'])
-                    router_params['ospf_network_address'] = router_params['wlan_address'] + '/28'
+                    router_params['ospf_network_address'] = router_params['wlan_address'] ##+ '/28'
                 else:
                     router_params['network_address'] = self._getInterfaceNetwork(iface['addr_id'])
-                    router_params['ospf_network_address'] = router_params['network_address'] + '/28'
+                    router_params['ospf_network_address'] = router_params['network_address'] ##+ '/28'
+            elif iface['if_type'] == 'vrrp' and iface['addr_id'] is not None:
+                interface_name = iface['if_name'] + '_inerface'
+                router_params[interface_name] = iface['if_name']
+                ifname_ip = iface['if_name'] + '_ip'
+                router_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
+                ifnetwork = iface['if_name'] + '_network'
+                router_params[ifnetwork] = self._getInterfaceNetwork(iface['addr_id'])
             elif iface['dhcp_id'] is not None and iface['if_type'] == 'dhcp':
                 query = """SELECT pool.pool_name, ipn.ip_address as network, ipl.ip_address as lower_addr, 
                             ipu.ip_address as upper_addr, 

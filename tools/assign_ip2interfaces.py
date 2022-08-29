@@ -105,23 +105,26 @@ def main(args):
     elif args.assign.lower() == 'sector':
         sector_if = True
     else:
-        vrrp_if = False
-        router_if = True
-        backbone_if = True
-        sector_if = True
+        vrrp_if = True
+        router_if = False
+        backbone_if = False
+        sector_if = False
 
 
     #if default_gateway_if:
     #    assign_default_gateway_interfaces(db, org_id, site_ids)
 
-    if router_if:
-        assign_router_interfaces(db, org_id, site_ids, groups)
+    #if router_if:
+    #    assign_router_interfaces(db, org_id, site_ids, groups)
 
-    if backbone_if:
-        assign_backbone_interfaces(db,org_id, path_ids)
+    #if backbone_if:
+    #    assign_backbone_interfaces(db,org_id, path_ids)
 
-    if sector_if:
-        assign_sector_interfaces(db,org_id,site_ids, groups)
+    #if sector_if:
+    #    assign_sector_interfaces(db,org_id,site_ids, groups)
+
+    if vrrp_if:
+        assign_vrrp_interfaces(db,org_id, site_ids)
 
 
 
@@ -132,6 +135,36 @@ def assign_ospf_interfaces(db, org_id, site_ids):
 
 def assign_vrrp_interfaces(db, org_id, site_ids):
     logging.info("starting assign_default_gateway")
+    # we have assigned vrrp interfaces to all equipment.
+    # for now only sector vrrp interfaces are used.
+    # the vrrp ip address is the broadcast address of the
+    # ip block assigned to the wlan interface
+    query = """SELECT  if.id, if.equip_id, if.if_type, if.if_name, ip.id as ip_id,  ip.ip_address
+            FROM sites s
+            INNER JOIN site_equipment se
+            ON se.site_id = s.id
+            INNER JOIN interfaces if
+            ON if.equip_id = se.id
+            LEFT OUTER JOIN ip_addresses ip
+            ON ip.id = if.addr_id
+            WHERE s.org_id = ? AND se.site_id = ? 
+			AND se.group_id = (SELECT eqg.id FROM equipment_groups eqg WHERE eqg.group_name = 'sector')
+			AND lower(if.if_type) = 'vrrp' 
+            ORDER BY s.id, se.id, if.id;
+    """
+    # loop through sites and assign dhcp blocks to equipment
+    for site_id in site_ids:
+        # get dhcp interfaces for equipment
+        vrrp_ifs = db.getQueryData(query,org_id, site_id)
+        if vrrp_ifs is not None:
+            for idx, vrrp_if in vrrp_ifs.iterrows():
+                if vrrp_if['ip_address'] is None:
+                    equip_id = vrrp_if['equip_id']
+                    vrrp_addresses = db.getSiteDeviceVRRPAddresses(org_id, equip_id)
+                    if len(vrrp_addresses) > 0:
+                        if_id = vrrp_if['id']
+                        ip_id = vrrp_addresses[0]['vrrp_addr_id']
+                        db.assignInterfaceIPAddress(if_id, ip_id)
 
 
 def assign_dhcp_interfaces(db, org_id, site_ids):
