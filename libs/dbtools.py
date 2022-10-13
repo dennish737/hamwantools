@@ -242,13 +242,13 @@ class DbSqlite():
         eqp_suffix = rows[0][1]
         return (eqp_group_id, eqp_suffix)
 
-    def getEquipmentId(self, org_id, name):
-        query = 'SELECT id, name FROM site_equipment WHERE org_id = ? AND lower(name) = ?;'
+    def getEquipmentId(self, site_id, name):
+        query = 'SELECT id, name FROM site_equipment WHERE site_id = ? AND lower(name) = ?;'
         id = None
         eqp_name = None
         try:
             cursor = self.conn.cursor()
-            cursor.execute(query, (org_id, name.lower()))
+            cursor.execute(query, (site_id, name.lower()))
             row = cursor.fetchone()
             id = row[0]
             eqp_name = row[1]
@@ -1061,7 +1061,7 @@ class DbSqlite():
                 ptp_params['sys_name'] = iface['device_name']
                 ptp_params['router_name'] = iface['device_name']
             if iface['addr_id'] is not None:
-                interface_name = iface['if_name'] + '_inerface'
+                interface_name = iface['if_name'] + '_interface'
                 ptp_params[interface_name] = iface['if_name']
                 ifname_ip = iface['if_name'] + '_ip'
                 ptp_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
@@ -1086,7 +1086,7 @@ class DbSqlite():
                 router_params['sys_name'] = iface['device_name']
                 router_params['router_name'] = iface['device_name']
             if iface['addr_id'] is not None and (iface['if_type'] == 'ether' or iface['if_type'] == 'wlan'):
-                interface_name = iface['if_name'] + '_inerface'
+                interface_name = iface['if_name'] + '_interface'
                 router_params[interface_name] = iface['if_name']
                 ifname_ip = iface['if_name'] + '_ip'
                 router_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
@@ -1099,7 +1099,7 @@ class DbSqlite():
                     router_params['network_address'] = self._getInterfaceNetwork(iface['addr_id'])
                     router_params['ospf_network_address'] = router_params['network_address'] ##+ '/28'
             elif iface['if_type'] == 'vrrp' and iface['addr_id'] is not None:
-                interface_name = iface['if_name'] + '_inerface'
+                interface_name = iface['if_name'] + '_interface'
                 router_params[interface_name] = iface['if_name']
                 ifname_ip = iface['if_name'] + '_ip'
                 router_params[ifname_ip] = self._getInterfaceIp(iface['addr_id'])
