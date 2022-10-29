@@ -17,63 +17,20 @@ import logging
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, base_dir)
 from libs.dbtools import DbSqlite
+from libs.map_tables import MapTables
 from libs.ip_tools import ip2long, ip2hex, int2ip, hex2ip
 
-description = """
-Basic_Parser - used to create a config file from database parameters and a template text file"""
+description = """Parameter_table - maps database names to templates names"""
 
-dhcp_dict = {
-    'DP_DHCP_POOL': 'pool_name',
-    'DP_DHCP_NETWORK': 'network',
-    'DP_DHCP_LOWER_ADDR': 'lower_addr',
-    'DP_DHCP_UPPER_ADDR': 'upper_addr',
-    'DP_DHCP_GATEWAY_ADDR': 'gateway_addr',
-    'DP_DHCP_DNS_ADDR': 'dns_addr',
-}
-map_dict = {'DP_ETHER1_IP': 'ether1_ip',
-    'DP_DHCP': 'dhcp',
-    'DP_NETWORK_ADDRESS': 'network_address',
-    'DP_OSPF_NETWORK_ADDRESS': 'ospf_network_address',
-    'DP_OSPF_ROUTER_ID': 'ospf_router_id',
-    'DP_RADIO_NAME': 'radio_name',
-    'DP_REMOTE_IP': 'remote_ip',
-    'DP_REMOTE_ROUTER_NAME': 'remote_router_name',
-    'DP_ROUTER_NAME': 'router_name',
-    'DP_ROUTER_SSID': 'ptp_router_ssid',
-    'DP_ROUTER_SSID_KEY': 'ptp_router_key',
-    'DP_SYS_NAME': 'sys_name',
-    'DP_VRRP1_IP': 'vrrp1_ip',
-    'DP_WLAN1_IP': 'wlan1_ip',
-    'GP_CLUB_CONTACT': 'club_contact',
-    'GP_DNS1_IP': 'dns1',
-    'GP_DNS2_IP': 'dns2',
-    'GP_LOGGING1_IP': 'logging1_ip',
-    'GP_LOGGING2_IP': 'logging2_ip',
-    'GP_NTP1_IP': 'ntp1_ip',
-    'GP_NTP2_IP': 'ntp2_ip',
-    'GP_TIMEZONE': 'timezone',
-    'SP_OSPF_KEY': 'ospf_key',
-    'SP_CLIENT_PASSWORD': 'client_password',
-    'SP_CLIENT_SSID': 'client_ssid',
-    'SP_VRRP_KEY': 'vrrp_key',
-    'TP_ETHER1': 'ether1_interface',
-    'TP_ETHER2': 'ether2_interface',
-    'TP_ETHER3': 'ether3_interface',
-    'TP_ETHER4': 'ether4_interface',
-    'TP_ETHER5': 'ether5_interface',
-    'TP_ETHER6': 'ether6_interface',
-    'TP_ETHER7': 'ether7_interface',
-    'TP_ETHER8': 'ether8_interface',
-    'TP_WLAN1': 'wlan1_interface',
-    'TP_WLAN2': 'wlan2_interface',
-    'TP_VRRP1': 'vrrp1_interface'
-}
+# initialize mapping tables
+map_tables = MapTables()
+dhcp_dict = map_tables.GetDHCPDict()
+map_dict = map_tables.GetMapDict()
 
 def main(args):
     dirs = check_dirs(['outputs', 'logs'])
-    out_dir = dirs[0]
-    log_dir = dirs[1]
-    print(args)
+    out_dir = dirs['outputs']
+    log_dir = dirs['logs']
 
     log_file = args.log
     now = datetime.now()
@@ -111,36 +68,62 @@ def main(args):
     print('Site Name:', args.site.lower())
     print('site_ids =', site_ids)
     print('Device name:', args.device.lower())
+    out_file = '../outputs/' + args.device.lower() + '.prm'
     device_id = db.getEquipmentId(org_id, args.device)[0]
     print('Device id:', device_id)
+
     #print("parameters -------------")
-    params = db.getDeviceParameters(device_id, call_sign)
-    map_params = {}
-    for k,v in map_dict.items():
-        if v in params:
-            if v == 'dhcp':
-                dhcp_params(params[v], map_params)
-            else:
-                map_params[k] = params[v]
+    map_params = get_parameters(device_id, call_sign, db)
     #print(map_params)
-    #print(map_dict)
-    #print(params)
-    print('        Tag                   Param                ')
-    print('---------------------------------------------------')
-    for k,v in map_params.items():
-        print('{0: <25} {1}'.format(k, v))
+    global_params = get_globals(org_id, site_ids[0], db)
+    print(global_params)
+    for k, v in global_params.items():
+        map_params[k] = v
+    security_params = get_security(org_id,site_ids[0], db)
+    #print(security_params)
+    for k, v in security_params.items():
+        map_params[k] = v
+
+    with open(out_file, 'w') as output:
+        print('        Tag                   Param                ', file=output)
+        #print('---------------------------------------------------', file=out_file)
+        for k,v in map_params.items():
+            print('{0: <25} {1}'.format(k, v), file=output)
 
 
+
+
+def find_base_dir():
+    base_dir = None
+    path = os.getcwd()
+    i = 0
+    while i > -1 and i < 3:
+        print(path)
+        item_list = os.listdir(path)
+        if 'tools' in item_list:
+            print('found:')
+            base_dir = path
+            i = -1
+            break
+        else:
+            i += 1
+            path = os.path.dirname(path)
+    return base_dir
 
 def check_dirs(dir_list):
-    global base_dir
-    dirs = []
-    for dir in dir_list:
-        path = os.path.join(base_dir, dir)
+    dirs = {}
+    base_dir = find_base_dir()
+    for d in dir_list:
+        print(d)
+        path = os.path.join(base_dir, d)
         if not os.path.isdir(path):
-            os.makedirs(path)
-        dirs.append(path)
+            os.makedirs(d)
+            dirs[d] = path
+            print('directory {0} created'.format(path))
+        else:
+            dirs[d] = path
     return dirs
+
 
 def get_log_level(level):
     log_level = logging.WARNING
@@ -156,6 +139,7 @@ def get_log_level(level):
         log_level = logging.WARNING
     return log_level
 
+
 def dhcp_params(params, param_dict):
     # process dhcp info
     for param_set in params:
@@ -165,19 +149,57 @@ def dhcp_params(params, param_dict):
                 param_dict[k] = param_set[v]
     return
 
-def site_router():
-    pass
+def get_parameters(device_id, call_sign, db):
+    params = db.getDeviceParameters(device_id, call_sign)
+    logging.info("parameters returned: ------------------------------")
+    for param, value in params.items():
+        logging.info("params %s: %r", param, value)
 
-def sector_router():
-    pass
+    map_params = {}
+    for k, v in map_dict.items():
+        if v in params:
+            if v == 'dhcp':
+                dhcp_params(params[v], map_params)
+            else:
+                map_params[k] = params[v]
 
-def ptp_router():
-    pass
+    logging.info("mapped parameters: ---------------------------------")
+    for param, value in map_params.items():
+        logging.info("mapped params %s: %r", param, value)
 
+    map_gparams = {}
+
+    return map_params
+
+def get_globals(org_id, site_id,db):
+    g_params = db.getGlobalParameters( org_id, site_id)
+    logging.info("global parameters returned: ------------------------------")
+    for gparam, value in g_params.items():
+        logging.info("global params %s: %r", gparam, value)
+    map_gparams = {}
+    for k, v in map_dict.items():
+        if v in g_params:
+            map_gparams[k] = g_params[v]
+    print(g_params)
+    #print(map_gparams)
+    return map_gparams
+
+def get_security(org_id, site_id, db):
+    security_params = db.getSecurityParameters(org_id, site_id)
+    for s_param, value in security_params.items():
+        logging.info("security params %s: %r", s_param, value)
+
+    map_sparams = {}
+    for k, v in map_dict.items():
+        if v in security_params:
+            map_sparams[k] = security_params[v]
+    #print(security_params)
+    #print(map_sparams)
+    return map_sparams
 
 if __name__ == '__main__':
 
-    TEST = True
+    TEST = False
     args = None
     parser: ArgumentParser = argparse.ArgumentParser(description=description)
     parser.add_argument('-c', '--club', help='club name', required=True)
