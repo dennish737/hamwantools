@@ -1,0 +1,70 @@
+
+
+/interface bridge add name=bridge1
+
+/interface bridge settings
+set use-ip-firewall=yes use-ip-firewall-for-pppoe=yes use-ip-firewall-for-vlan=yes
+
+/interface bridge port
+add bridge=bridge1 comment=defconf interface=ether1
+add bridge=bridge1 comment=defconf interface=ether2
+add bridge=bridge1 comment=defconf interface=ether3
+add bridge=bridge1 comment=defconf interface=ether4
+add bridge=bridge1 comment=defconf interface=ether5
+add bridge=bridge1 comment=defconf interface=ether6
+add bridge=bridge1 comment=defconf interface=ether7
+add bridge=bridge1 comment=defconf interface=ether8
+#note ssp ports do not need to be assigned if not used
+add bridge=bridge1 comment=defconf interface=sfp9
+add bridge=bridge1 comment=defconf interface=sfp10
+add bridge=bridge1 comment=defconf interface=sfp11
+add bridge=bridge1 comment=defconf interface=sfp12
+
+/interface ovpn-server server
+set cipher=aes256 enabled=yes
+
+/interface wireless security-profiles
+set [ find default=yes ] supplicant-identity=MikroTik
+
+#Routing -------------------------------------------------------
+/routing ospf instance
+set [ find default=yes ] distribute-default=if-installed-as-type-1 in-filter=AMPR-default out-filter=AMPR-default redistribute-bgp=as-type-1 redistribute-connected=as-type-1 redistribute-other-ospf=as-type-1 router-id=DP_OSPF_ROUTER_ID
+
+/routing filter
+add action=accept chain=AMPR-default prefix=44.0.0.0/8 prefix-length=8-32
+add action=accept chain=AMPR-default prefix=0.0.0.0/0
+add action=reject chain=AMPR-default
+
+/routing ospf interface
+add authentication=md5 authentication-key=SP_OSPF_KEY interface=TP_ETHER6 network-type=broadcast
+
+/routing ospf network
+add area=backbone network=<span style=DP_OSPF_NETWORK_ADDRESS
+
+#global ip -------------------------------------------------
+
+/ip address
+add address=DP_ETHER1_IP interface=TP_ETHER1 network=DP_NETWORK_ADDRESS
+
+/ip hotspot profile set [ find default=yes ] html-directory=flash/hotspot
+
+/ip dns set allow-remote-requests=yes servers=GP_DNS1,GP_DNS2
+
+
+#SNMP ------------------------------------------------------------------
+/snmp
+set contact=GP_CLUB_CONTACT enabled=yes
+
+#System ----------------------------------------------------------------
+/system logging action
+set 3 remote=GP_LOGGING1_IP
+
+/system clock
+set time-zone-autodetect=no time-zone-name=GP_TIMEZONE
+/system identity
+set name=DP_ROUTER_NAME
+
+/system logging
+add action=remote topics=!debug,!snmp
+/system ntp client
+set enabled=yes primary-ntp=GP_NTP1_IP secondary-ntp=GP_NTP2_IP

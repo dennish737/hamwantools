@@ -186,3 +186,51 @@ no parameters are returned. Likewise for DHCP
  10. _to
  11. radioname
  12. remote_router_name
+
+# Parameter Tags
+The various global, site, device, path and security parameters are mapped to 'tags'
+that are used in our templates for configuring devices. As we have mentioned, we have rules
+for selecting the correct parameters that are available in general and site settings.
+The tools we use are a set of query that extract the and merge the parameters into s set of 
+dictionaries. These dictionaries are then used by the parser to substitute the parameter
+value for the template 'tag' name.
+## Parameter Dictionary
+There are four (4) dictionaries that are used to hold the parameters. These are:
+ - Security Parameters (SP)
+ - Global Parameters (GP)
+ - Text Parameters (TP)
+ - Device Parameters (DP) : this includes path parameters for PTP connections
+
+To make sure we use the correct dictionary for parameter substitution we add a two (2)
+character prefix to parameter name, identifying the dictionary (e.g. SP, GP, ...)
+## Parameter Tags
+The following mapping table is used to map template parameters to database parameters:
+
+| Template_name           | param_dict          | parameter_name       |
+|-------------------------|---------------------|----------------------|
+| SP_CLIENT_PASSWORD      | security_parameters | client_password      |
+| SP_CLIENT_SSID          | securty_parameters  | client_ssid          |
+| GP_CLUB_CONTACT         | global_parameters   | club_contact         |
+| GP_DNS1_IP              | global_parameters   | dns1                 |
+| GP_DNS2_IP              | global_parameters   | dns2                 |
+| TP_ETHER1               | text_parameters     | ether1               |
+| DP_ETHER1_IP            | device_parameters   | ether1_ip            |
+| GP_LOGGING1_IP          | global_parameters   | logging1_ip          |
+| GP_LOGGING2_IP          | global_parameters   | logging2_ip          |
+| DP_NETWORK_ADDRESS      | device_parameters   | network_address      |
+| GP_NTP1_IP              | global_parameters   | ntp1_ip              |
+| GP_NTP2_IP              | global_parameters   | ntp2_ip              |
+| SP_OSPF_KEY             | security_parameters | ospf_key             |
+| DP_OSPF_NETWORK_ADDRESS | device_parameters   | ospf_network_address |
+| DP_OSPF_ROUTER_ID       | device_parameters   | ospf_router_id       |
+| DP_RADIO_NAME           | device_parameters   | radio_name           |
+| DP_REMOTE_IP            | device_parameters   | remote_ip            |
+| DP_REMOTE_ROUTER_NAME   | device_parameters   | remote_router_name   |
+| DP_ROUTER_NAME          | device_parameters   | router_name          |
+| DP_SYS_NAME             | device_parameters   | sys_name             |
+| GP_TIMEZONE             | global_parameters   | timezone             |
+| SP_VRRP_KEY             | security_parameters | vrrp_key             |
+| TP_VRRP1                | text_parameters     | vrrp1                |
+| DP_VRRP1_IP             | device_parameters   | vrrp1_ip             |
+| DP_WLAN1_IP             | device_parameters   | wlan1_ip             |
+| TP_WLAN1                | text_parameters     | wlan1                |

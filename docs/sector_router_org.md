@@ -11,6 +11,7 @@ Let's start by looking at a configuration file for a Sector Router.
     3. Default Gateway for routing trafic
     4. Route trafic between clients and the site Bridge/Router
 
+# Step 1 - dumping an exiting device
 ## Sector Router Configuration File model = RB912UAG-5HPnD-US
 Below is a dump of a configuration file for a Switch/Router
 ### Dump File
@@ -87,8 +88,9 @@ add action=remote topics=!debug,!snmp
 /system ntp client  
 set enabled=yes primary-ntp=<span style="color:red">*44.12.140.4*</span> secondary-ntp=<span style="color:red">*44.12.140.5*</span>  
 
-## End of Dump
+### End of Dump
 
+# Step 2 - Identify what items will change from device to device
 Note that we have rearranged our file into our sections:
  1) Interfaces
  2) Routing
@@ -106,3 +108,35 @@ servers.
 
 The interface ids will only change if you have multiple interface of hte same
 type active in a device.
+
+# Step 3 - Map the changes to configuration tags
+The following mapping table is used to map template parameters to database parameters:
+
+| Template_name           | param_dict         | dict_name            |
+|-------------------------|--------------------|----------------------|
+| SP_CLIENT_PASSWORD      | security_parameters | client_password      |
+| SP_CLIENT_SSID          | securty_parameters | client_ssid          |
+| GP_CLUB_CONTACT         | global_parameters  | club_contact         |
+| GP_DNS1_IP              | global_parameters  | dns1                 |
+| GP_DNS2_IP              | global_parameters  | dns2                 |
+| TP_ETHER1               | text_parameters    | ether1               |
+| DP_ETHER1_IP            | device_parameters  | ether1_ip            |
+| GP_LOGGING1_IP          | global_parameters  | logging1_ip          |
+| GP_LOGGING2_IP          | global_parameters  | logging2_ip          |
+| DP_NETWORK_ADDRESS      | device_parameters  | network_address      |
+| GP_NTP1_IP              | global_parameters  | ntp1_ip              |
+| GP_NTP2_IP              | global_parameters  | ntp2_ip              |
+| SP_OSPF_KEY             | security_parameters | ospf_key             |
+| DP_OSPF_NETWORK_ADDRESS | device_parameters  | ospf_network_address |
+| DP_OSPF_ROUTER_ID       | device_parameters  | ospf_router_id       |
+| DP_RADIO_NAME           | device_parameters  | radio_name           |
+| DP_REMOTE_IP            | device_parameters  | remote_ip            |
+| DP_REMOTE_ROUTER_NAME   | device_parameters  | remote_router_name   |
+| DP_ROUTER_NAME          | device_parameters  | router_name          |
+| DP_SYS_NAME             | device_parameters  | sys_name             |
+| GP_TIMEZONE             | global_parameters  | timezone             |
+| SP_VRRP_KEY             | security_parameters | vrrp_key             |
+| TP_VRRP1                | text_parameters    | vrrp1                |
+| DP_VRRP1_IP             | device_parameters  | vrrp1_ip             |
+| DP_WLAN1_IP             | device_parameters  | wlan1_ip             |
+| TP_WLAN1                | text_parameters    | wlan1                |

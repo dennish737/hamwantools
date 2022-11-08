@@ -1,3 +1,9 @@
+# Tools
+[SQLite Compare Utility](https://www.codeproject.com/Articles/220018/SQLite-Compare-Utility#:~:text=Basically%20%2D%20in%20order%20to%20compare,comparing%20only%20SQL%20schema%20differences.)
+
+[DB Schema](https://dbschema.com/?AFFILIATE=96594&__c=1)  
+[DB Browser for SQLite](https://sqlitebrowser.org/)  
+
 # Mikrotik Docs
 [General Commands](https://help.mikrotik.com/docs/display/ROS/Command+Line+Interface)
 
