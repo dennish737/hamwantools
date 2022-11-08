@@ -1,5 +1,4 @@
 
-
 /interface bridge add name=bridge1
 
 /interface bridge settings
@@ -39,7 +38,7 @@ add action=reject chain=AMPR-default
 add authentication=md5 authentication-key=SP_OSPF_KEY interface=TP_ETHER6 network-type=broadcast
 
 /routing ospf network
-add area=backbone network=<span style=DP_OSPF_NETWORK_ADDRESS
+add area=backbone network=DP_OSPF_NETWORK_ADDRESS
 
 #global ip -------------------------------------------------
 
@@ -48,7 +47,7 @@ add address=DP_ETHER1_IP interface=TP_ETHER1 network=DP_NETWORK_ADDRESS
 
 /ip hotspot profile set [ find default=yes ] html-directory=flash/hotspot
 
-/ip dns set allow-remote-requests=yes servers=GP_DNS1,GP_DNS2
+/ip dns set allow-remote-requests=yes servers=GP_DNS1_IP,GP_DNS2_IP
 
 
 #SNMP ------------------------------------------------------------------
