@@ -27,3 +27,5 @@ library support for encoding and decoding, and can be stored and understood by t
 So the language we have chosen is JSON, for our advance template tool.
 
 ## Slicing our Template file into JSON Snippets
+The template [switch_config.json](../templates/switch_config.json) is an example of a json configuration 
+file based on the [r_router_template.txt](../templates/r_router_template.txt).
