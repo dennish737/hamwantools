@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/product.schema.json",
-  "title": "HamWAN Config",
-  "description": "HamWan Configuration commands for device type",
+  "title": "HamWAN Config Switch Router",
+  "description": "HamWan Configuration commands for device type switch",
   "type": "object",
   "__comment1__": "Configuration HamWAN devices",
   "__comment2__": "Assumptions",
@@ -20,7 +20,6 @@
 								"params": {
 									"name": "bridge1",
 									"disable": "no",
-									"protocol-mode": "rstp"
 								}
 							}]
 						},
@@ -101,16 +100,58 @@
 							"operations": [{
 								"operation": "add",
 								"params": {
-									"address": "ether1_ip",
-									"interface": "ether1"
+									"address": "DP_ETHER1_IP",
+									"interface": "TP_ETHER1"
 								}
 							}]
 						}
                       }
 
-					}
+					},
+		"ovpn":{
+			"activities": {
+				"create":{
+					"command": "/interface ovpn-server server",
+					"operations": [{
+						"operation": "set",
+						"params": {
+							"cipher": "aes256",
+							"enable": "yes"
+						}
+					}]
+				},
+				"security-profile":{
+					"command": "/interface wireless security-profiles"
+					"operations": [{
+						"operation": "set [ find default=yes]",
+						"params" : {
+							"supplicant-identity": "MikroTik"
+						}
+					}]
+				}
+
+			}
       },
       "routing": {
+		"instance":  {
+			"activities": {
+				"command": "/routing ospf instance",
+				"operatons": [
+					{
+						"activity": "set [ find default=yes ]",
+						"params" : {
+							"distribute-default": "if-installed-as-type-1"
+							"in-filter": "AMPR-default"
+							"out-filter": :AMPR-default"
+							"redistribute-bgp": "as-type-1"
+							"redistribute-connected": "as-type-1"
+							"redistribute-other-ospf": "as-type-1"
+							"router-id": "DP_OSPF_ROUTER_ID"
+						}
+					}
+				]
+			}
+		},
         "filters": {
           "activities": {
             "command": "/routing filters",
@@ -151,8 +192,8 @@
                   "operation": "add",
                   "parms": {
                     "authentication": "md5",
-                    "authenticaton-key": "ospfkey",
-                    "interface": "ospf_if",
+                    "authenticaton-key": "SP_OSPF_KEY",
+                    "interface": "TP_ETHER6",
                     "network-type": "broadcast"
                   }
                 }
@@ -165,45 +206,42 @@
                   "operation": "add",
                   "params": {
                     "area": "backbone",
-                    "network": "ospf_net"
+                    "network": "DP_OSPF_NETWORK_ADDRESS"
                   }
                 }
               ]
             }
           }
         },
-        "vrrp": {
-          "activities": {
-            "create": {
-              "command": "/interface vrrp",
-              "activities": [
-                {
-                  "activity": "add",
-                  "params": {
-                    "authentication": "ah",
-                    "interface": "ether1",
-                    "name": "vrrp1",
-                    "password": "vrrpkey",
-                    "version": "2"
-                  }
-                }
-              ]
-            },
-            "ip_address": {
-              "command": "/ip address",
-              "activities": [
-                {
-                  "activity": "add",
-                  "params": {
-                    "address": "vrrp_ip",
-                    "interface": "vrrp1",
-                    "network": "vrrp_net"
-                  }
-                }
-              ]
-            }
-          }
-        }
+		"global_ip": {
+			"activities": {
+				"command": "/ip address",
+				"activity": "add",
+				"params": {
+					"address": "DP_ETHER1_IP",
+					"interface": "TP_ETHER1",
+					"network": "DP_NETWORK_ADDRESS"
+			}
+		},
+		"hot_spot": {
+			"activities": {
+				"command": "/ip hotspot profile",
+				"activity": "set [ find default=yes ]",
+				"params": {
+					"html-directory": "flash/hotspot"
+				}
+			}
+		},
+		"ip_dns": {
+			"acvtivities": {
+				"command": "/ip dns",
+				"activity": "set",
+				"params": {
+					"allow-remote-requests": "yes",
+					"servers": "GP_DNS1_IP,GP_DNS2_IP"
+				}
+			}
+
       },
       "snmp": {
 				"activities": {
@@ -222,7 +260,7 @@
 						"operations": [{
 							"operation": "set ",
 							"params": {
-								"contact": "\"#HamWAN-Support on irc.freenode.org\"",
+								"contact": "GP_CLUB_CONTACT",
 								"enable": "yes",
                                 "trap-community": "WAconnect"
 							}
@@ -239,10 +277,21 @@
 							{
 								"operation": "set",
 								"params": {
-									"name": "sys_name"
+									"name": "DP_ROUTER_NAME"
 								}
 							}
 						]
+					},
+					"ntp": {
+						"command": "/system ntp client",
+						"operations": [{
+							"operation": "set",
+							"params": {
+								"enabled": "yes",
+								"primary-ntp": "GP_NTP1_IP",
+								"secondary-ntp": "GP_NTP2_IP"
+							}
+						}]
 					},
 					"clock": {
 						"command": "/system clock",
@@ -250,25 +299,25 @@
 							"operation": "set",
 							"params": {
 								"time-zone-autodetect": "no",
-								"time-zone-name": "timezone"
+								"time-zone-name": "GP_TIMEZONE"
 							}
 						}]
 					},
-					"led1": {
-						"command": "/system leds",
+					"log_action": {
+						"command": "/system logging action",
 						"operations": [{
-							"operation": "set 1",
+							"operation": "set 3",
 							"params": {
-								"interface": "wlan1"
+								"remote": "GP_LOGGING1_IP"
 							}
 						}]
 					},
-					"tools": {
-						"command": "/tool bandwidth-server",
+					"logging": {
+						"command": "/system logging",
 						"operations": [{
-							"operation": "set",
+							"operation": "add",
 							"params": {
-								"authenticate": "no"
+								"action": "remote topics=!debug,!snmp"
 							}
 						}]
 					}
